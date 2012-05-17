@@ -1,6 +1,7 @@
 (ns domicile.core-test
   (:require
     [domicile.core :as dom]
+    [domicile.svg :as svg]
     [menodora.core :as mc])
   (:use
     [menodora.predicates :only [eq type-eq]])
@@ -13,7 +14,6 @@
                     (. node setAttribute "class" "one two three")
                     (dom/dom-list (. node -classList)))]
     (should "implement ISeqable"
-      (expect type-eq dom/DomList classes)
       (expect eq (seq ["one" "two" "three"]) (seq classes)))
     (should "implement ICounted"
       (expect eq 3 (count classes)))
@@ -103,6 +103,45 @@
       (let [node (. js/document createElement "div")
             props (dom/props node)]
         (. node setAttribute "class" "one two three")
-        (expect type-eq dom/DomList (:classList props))))))
+        (expect type-eq dom/DomList (:classList props)))))
+
+  (describe "SvgList"
+    :let [points (let [node (. js/document createElementNS svg/svgns "polygon")]
+                    (. node setAttribute "points" "0 0 100 100 20 80")
+                    (svg/svg-list (.. node -points)))]
+    (should "implement ISeqable"
+      (expect type-eq svg/SvgList points)
+      (expect eq (seq [[0 0] [100 100] [20 80]])
+        (for [p points] [(. p -x) (. p -y)])))
+    (should "implement ICounted"
+      (expect eq 3 (count points)))
+    (should "implement IReduce"
+      (expect eq [121 181] (reduce (fn [[x y] p] [(+ x (. p -x)) (+ y (. p -y))]) [1 1] points)))
+    (should "implememnt IIndexed"
+      (expect eq 100 (. (nth points 1) -x))
+      (expect type-eq js/SVGPoint (nth points 1 :not-found))
+      (expect eq :not-found (nth points 3 :not-found))))
+
+  (describe "SvgProps"
+    (should "implement ILookup"
+      (let [node (. js/document createElementNS svg/svgns "rect")
+            props (svg/props node)]
+        (set! (.. node -x -baseVal -value) 10)
+        (expect eq 10 (:x props))
+        (expect eq nil (:bar props))
+        (expect eq 10 (get props :x :not-found))
+        (expect eq :not-found (get props :bar :not-found))))
+    (should "implement ITransientAssociative"
+      (let [node (. js/document createElementNS svg/svgns "rect")
+            props (svg/props node)]
+        (assoc! props :x 10)
+        (expect eq 10 (.. node -x -baseVal -value))
+        (assoc! props :x 11)
+        (expect eq 11 (.. node -x -baseVal -value))))
+    (should "wrap svg lists"
+      (let [node (. js/document createElementNS svg/svgns "polygon")
+            props (svg/props node)]
+        (. node setAttribute "points" "0 0 100 100 20 80")
+        (expect type-eq svg/SvgList (:points props))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:
