@@ -6,33 +6,36 @@
   IHash
   (-hash [o] (goog/getUid o)))
 
-(defn ns-key
-  [k]
-  (and (vector? k) k))
+(defprotocol NodeWrapper
+  (-dom-node [wrapper]))
 
 (deftype Attrs [node]
-  ILookup
-  (-lookup
-    ([o k]
-     (if-let [[ns k] (ns-key k)]
-       (. node getAttributeNS ns (name k))
-       (. node getAttribute (name k))))
-    ([o k not-found]
-     (or (-lookup o k) not-found)))
+  NodeWrapper
+  (-dom-node [_] node)
 
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (if-let [[ns key] (ns-key key)]
-      (. node setAttributeNS ns (name key) val)
+    (if (vector? key)
+      (. node setAttributeNS (first key) (name (second key)) val)
       (. node setAttribute (name key) val)))
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (if-let [[ns key] (ns-key key)]
-      (. node removeAttributeNS ns (name key))
+    (if (vector? key)
+      (. node removeAttributeNS (first key) (name (second key)))
       (. node removeAttribute (name key)))))
+
+(extend-type Attrs
+  ILookup
+  (-lookup
+    ([o k]
+     (if (vector? k)
+       (. (-dom-node o) getAttributeNS (first k) (name (second k)))
+       (. (-dom-node o) getAttribute (name k))))
+    ([o k not-found]
+     (or (-lookup o k) not-found))))
 
 (defn attrs
   [node]
@@ -40,12 +43,8 @@
 
 
 (deftype Styles [node]
-  ILookup
-  (-lookup
-    ([o k]
-     (aget (. node -style) (name key)))
-    ([o k not-found]
-     (or (-lookup o k) not-found)))
+  NodeWrapper
+  (-dom-node [_] node)
 
   ITransientAssociative
   (-assoc!
@@ -57,18 +56,23 @@
     [tcoll key]
     (aset (. node -style) (name key) "")))
 
+(extend-type Styles
+  ILookup
+  (-lookup
+    ([o k]
+     (let [val (aget (. (-dom-node o) -style) (name k))]
+       (if (= "" val) nil val)))
+    ([o k not-found]
+     (or (-lookup o k) not-found))))
+
 (defn css
   [node]
   (Styles. node))
 
 
 (deftype Props [node]
-  ILookup
-  (-lookup
-    ([o k]
-     (aget node (:name k)))
-    ([o k not-found]
-     (or (-lookup o k) not-found)))
+  NodeWrapper
+  (-dom-node [_] node)
 
   ITransientAssociative
   (-assoc!
@@ -79,6 +83,14 @@
   (-dissoc!
     [tcoll key]
     (aset node (name key) nil)))
+
+(extend-type Props
+  ILookup
+  (-lookup
+    ([o k]
+     (aget (-dom-node o) (:name k)))
+    ([o k not-found]
+     (or (-lookup o k) not-found))))
 
 (defn props
   [node]
