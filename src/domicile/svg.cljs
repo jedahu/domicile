@@ -2,18 +2,17 @@
   (:require
     [domicile.core :as core]))
 
-(defn- svg-seq
-  [s]
-  (when s
-    (for [i (range (. s -numberOfItems))]
-      (.getItem s i))))
-
-(defrecord SvgList [list]
+(defrecord ЅvgList [list]
   ISeqable
-  (-seq [this] (svg-seq list))
+  (-seq
+    [this]
+    (for [i (range 0 (. list -numberOfItems))]
+      (. list getItem i)))
 
   ICounted
-  (-count [this] (. list -numberOfItems))
+  (-count
+    [this]
+    (. list -numberOfItems))
 
   IIndexed
   (-nth
@@ -49,7 +48,7 @@
 
 (defn svg-list
   [list]
-  (SvgList. list))
+  (when list (SvgList. list)))
 
 
 (deftype SvgProps [node]
@@ -102,4 +101,4 @@
 
 (defn props
   [node]
-  (SvgProps. node))
+  (when node (SvgProps. node)))

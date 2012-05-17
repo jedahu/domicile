@@ -41,6 +41,46 @@
         (expect eq "red" (:color css))
         (expect eq nil (:border css))
         (expect eq "red" (get css :color :not-found))
-        (expect eq :not-found (get css :background :not-found))))))
+        (expect eq :not-found (get css :background :not-found))))
+    (should "implement ITransientAssociative"
+      (let [node (. js/document createElement "div")
+            css (dom/css node)]
+        (assoc! css :color "red")
+        (expect eq "red" (.. node -style -color))
+        (assoc! css :color "blue")
+        (expect eq "blue" (.. node -style -color))))
+    (should "implement ITransientMap"
+      (let [node (. js/document createElement "div")
+            css (dom/css node)]
+        (set! (.. node -style -color) "red")
+        (dissoc! css :color)
+        (expect eq "" (.. node -style -color))
+        (dissoc! css :color)
+        (expect eq "" (.. node -style -color)))))
+
+  (describe "Props"
+    (should "implement ILookup"
+      (let [node (. js/document createElement "div")
+            props (dom/props node)]
+        (set! (. node -foo) "abc")
+        (expect eq "abc" (:foo props))
+        (expect eq nil (:bar props))
+        (expect eq "abc" (get props :foo :not-found))
+        (expect eq :not-found (get props :bar :not-found))))
+    (should "implement ITransientAssociative"
+      (let [node (. js/document createElement "div")
+            props (dom/props node)]
+        (assoc! props :foo "abc")
+        (expect eq "abc" (. node -foo))
+        (assoc! props :foo "def")
+        (expect eq "def" (. node -foo))))
+    (should "implement ITransientMap"
+      (let [node (. js/document createElement "div")
+            props (dom/props node)]
+        (set! (. node -foo) "abc")
+        (dissoc! props :foo)
+        (expect eq nil (. node -foo))
+        (dissoc! props :foo)
+        (expect eq nil (. node -foo))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:
