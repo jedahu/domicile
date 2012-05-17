@@ -11,7 +11,7 @@
   (-underlying [wrapper]))
 
 
-(defrecord DomList [list]
+(deftype DomList [list]
   Wrapper
   (-underlying [_] list)
 
@@ -30,16 +30,16 @@
   IReduce
   (-reduce
     ([this f]
-     (ci-reduce (-underlying this) f))
+     (ci-reduce this f))
     ([this f start]
-     (ci-reduce (-underlying this) f start)))
+     (ci-reduce this f start)))
 
   IIndexed
   (-nth
     ([this n]
      (when (< n (. (-underlying this) -length))
        (. (-underlying this) item n)))
-    ([list n not-found]
+    ([this n not-found]
      (if (< n (. (-underlying this) -length))
        (. (-underlying this) item n)
        not-found))))

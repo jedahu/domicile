@@ -8,6 +8,23 @@
     [menodora :only [defsuite describe should expect]]))
 
 (defsuite core-tests
+  (describe "DomList"
+    :let [classes (let [node (. js/document createElement "div")]
+                    (. node setAttribute "class" "one two three")
+                    (dom/dom-list (. node -classList)))]
+    (should "implement ISeqable"
+      (expect eq dom/DomList (type classes))
+      (expect eq (seq ["one" "two" "three"]) (seq classes)))
+    (should "implement ICounted"
+      (expect eq 3 (count classes)))
+    (should "implement IReduce"
+      (expect eq "onetwothree" (reduce str classes))
+      (expect eq "zeroonetwothree" (reduce str "zero" classes)))
+    (should "implememnt IIndexed"
+      (expect eq "two" (nth classes 1))
+      (expect eq "two" (nth classes 1 :not-found))
+      (expect eq :not-found (nth classes 3 :not-found))))
+
   (describe "Attrs"
     (should "implement ILookup"
       (let [node (. js/document createElement "div")
