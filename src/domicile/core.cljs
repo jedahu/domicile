@@ -128,7 +128,10 @@
   ILookup
   (-lookup
     ([o k]
-     (aget (-underlying o) (name k)))
+     (let [val (aget (-underlying o) (name k))]
+       (if (and val (. val -item))
+         (dom-list val)
+         val)))
     ([o k not-found]
      (or (-lookup o k) not-found))))
 

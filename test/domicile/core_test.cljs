@@ -3,7 +3,7 @@
     [domicile.core :as dom]
     [menodora.core :as mc])
   (:use
-    [menodora.predicates :only [eq]])
+    [menodora.predicates :only [eq type-eq]])
   (:use-macros
     [menodora :only [defsuite describe should expect]]))
 
@@ -13,7 +13,7 @@
                     (. node setAttribute "class" "one two three")
                     (dom/dom-list (. node -classList)))]
     (should "implement ISeqable"
-      (expect eq dom/DomList (type classes))
+      (expect type-eq dom/DomList classes)
       (expect eq (seq ["one" "two" "three"]) (seq classes)))
     (should "implement ICounted"
       (expect eq 3 (count classes)))
@@ -98,6 +98,11 @@
         (dissoc! props :foo)
         (expect eq nil (. node -foo))
         (dissoc! props :foo)
-        (expect eq nil (. node -foo))))))
+        (expect eq nil (. node -foo))))
+    (should "wrap dom lists"
+      (let [node (. js/document createElement "div")
+            props (dom/props node)]
+        (. node setAttribute "class" "one two three")
+        (expect type-eq dom/DomList (:classList props))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:
