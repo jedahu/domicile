@@ -37,7 +37,7 @@
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
-        (assoc! attrs :id "abc")
+        (expect eq attrs (assoc! attrs :id "abc"))
         (expect eq "abc" (. node getAttribute "id"))
         (assoc! attrs :id "def")
         (expect eq "def" (. node getAttribute "id"))))
@@ -45,7 +45,7 @@
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
         (. node setAttribute "id" "abc")
-        (dissoc! attrs :id)
+        (expect eq attrs (dissoc! attrs :id))
         (expect eq nil (. node getAttribute "id"))
         (dissoc! attrs :id)
         (expect eq nil (. node getAttribute "id")))))
@@ -62,7 +62,7 @@
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             css (dom/css node)]
-        (assoc! css :color "red")
+        (expect eq css (assoc! css :color "red"))
         (expect eq "red" (.. node -style -color))
         (assoc! css :color "blue")
         (expect eq "blue" (.. node -style -color))))
@@ -70,7 +70,7 @@
       (let [node (. js/document createElement "div")
             css (dom/css node)]
         (set! (.. node -style -color) "red")
-        (dissoc! css :color)
+        (expect eq css (dissoc! css :color))
         (expect eq "" (.. node -style -color))
         (dissoc! css :color)
         (expect eq "" (.. node -style -color)))))
@@ -87,7 +87,7 @@
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             props (dom/props node)]
-        (assoc! props :foo "abc")
+        (expect eq props (assoc! props :foo "abc"))
         (expect eq "abc" (. node -foo))
         (assoc! props :foo "def")
         (expect eq "def" (. node -foo))))
@@ -95,7 +95,7 @@
       (let [node (. js/document createElement "div")
             props (dom/props node)]
         (set! (. node -foo) "abc")
-        (dissoc! props :foo)
+        (expect eq props (dissoc! props :foo))
         (expect eq nil (. node -foo))
         (dissoc! props :foo)
         (expect eq nil (. node -foo))))
@@ -106,35 +106,67 @@
         (expect type-eq dom/DomList (:classList props)))))
 
   (describe "SvgList"
-    :let [points (let [node (. js/document createElementNS svg/svgns "polygon")]
+    :let [points #(let [node (. js/document createElementNS svg/svgns "polygon")]
                     (. node setAttribute "points" "0 0 100 100 20 80")
-                    (svg/svg-list (.. node -points)))]
+                    (svg/svg-list (.. node -points)))
+          root (. js/document createElementNS svg/svgns "svg")
+          point (let [pt (. root createSVGPoint)]
+                  (set! (. pt -x) 3)
+                  (set! (. pt -y) 9)
+                  pt)]
     (should "implement ISeqable"
-      (expect type-eq svg/SvgList points)
+      (expect type-eq svg/SvgList (points))
       (expect eq (seq [[0 0] [100 100] [20 80]])
-        (for [p points] [(. p -x) (. p -y)])))
+        (for [p (points)] [(. p -x) (. p -y)])))
     (should "implement ICounted"
-      (expect eq 3 (count points)))
+      (expect eq 3 (count (points))))
     (should "implement IReduce"
-      (expect eq [121 181] (reduce (fn [[x y] p] [(+ x (. p -x)) (+ y (. p -y))]) [1 1] points)))
+      (expect eq [121 181] (reduce (fn [[x y] p] [(+ x (. p -x)) (+ y (. p -y))]) [1 1] (points))))
     (should "implememnt IIndexed"
-      (expect eq 100 (. (nth points 1) -x))
-      (expect type-eq js/SVGPoint (nth points 1 :not-found))
-      (expect eq :not-found (nth points 3 :not-found))))
+      (expect eq 100 (. (nth (points) 1) -x))
+      (expect type-eq js/SVGPoint (nth (points) 1 :not-found))
+      (expect eq :not-found (nth (points) 3 :not-found)))
+    (should "implement ITransientCollection"
+      (let [pts (points)]
+        (expect eq pts (conj! pts point))
+        (expect eq point (. (dom/underlying pts) getItem 3))
+        (expect type-eq PersistentVector (persistent! pts))
+        (expect eq [[0 0] [100 100] [20 80] [3 9]]
+          (vec (map (fn [p] [(. p -x) (. p -y)]) (persistent! pts))))))
+    (should "implement ITransientAssociative"
+      (let [pts (points)]
+        (expect eq pts (assoc! pts point 0))
+        (expect eq point (. (dom/underlying pts) getItem 0))))
+    (should "implement ITransientVector"
+      (let [pts (points)]
+        (expect eq pts (pop! pts))
+        (expect eq 2 (count pts)))))
 
   (describe "SvgProps"
     (should "implement ILookup"
+      ;; prop -baseVal -value
       (let [node (. js/document createElementNS svg/svgns "rect")
             props (svg/props node)]
         (set! (.. node -x -baseVal -value) 10)
         (expect eq 10 (:x props))
         (expect eq nil (:bar props))
         (expect eq 10 (get props :x :not-found))
-        (expect eq :not-found (get props :bar :not-found))))
+        (expect eq :not-found (get props :bar :not-found)))
+      ;; prop -baseVal
+      (let [node (. js/document createElementNS svg/svgns "path")
+            props (svg/props node)]
+        (. node setAttribute "pathLength" "3")
+        (expect eq 3 (:pathLength props)))
+      ;; prop -baseVal (list)
+      (let [node (. js/document createElementNS svg/svgns "polyline")
+            props (svg/props node)]
+        (. node setAttribute "points" "0 0 100 100 20 80")
+        (expect type-eq svg/SvgList (:points props))
+        (expect eq 3 (count (:points props)))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElementNS svg/svgns "rect")
             props (svg/props node)]
-        (assoc! props :x 10)
+        (expect eq props (assoc! props :x 10))
         (expect eq 10 (.. node -x -baseVal -value))
         (assoc! props :x 11)
         (expect eq 11 (.. node -x -baseVal -value))))

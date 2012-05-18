@@ -20,20 +20,29 @@
     [this]
     (. list -numberOfItems))
 
+  ITransientAssociative
+  (-assoc!
+    [tcoll key val]
+    (-assoc-n! tcoll key val))
+
   ITransientCollection
   (-conj!
     [tcoll val]
-    (. list appendItem val))
+    (. list appendItem val)
+    tcoll)
   (-persistent!
     [tcoll]
-    (vec (svg-seq list)))
+    (vec (-seq tcoll)))
 
   ITransientVector
   (-assoc-n!
     [tcoll n val]
-    (. list replaceItem val n))
-  (-pop! [tcoll]
-    (. list removeItem (dec (. tcoll -numberOfItems)))))
+    (. list replaceItem n val)
+    tcoll)
+  (-pop!
+    [tcoll]
+    (. list removeItem (dec (. tcoll -numberOfItems)))
+    tcoll))
 
 (extend-type SvgList
   IIndexed
@@ -85,7 +94,8 @@
             :else (set! (. prop -baseVal) val)))
 
         :else (aset node (name key) val))
-      (aset node (name key) val))))
+      (aset node (name key) val))
+    tcoll))
 
 (extend-type SvgProps
   ILookup

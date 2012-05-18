@@ -10,6 +10,9 @@
 (defprotocol Wrapper
   (-underlying [wrapper]))
 
+(defn underlying
+  [wrapper]
+  (-underlying wrapper))
 
 (deftype DomList [list]
   Wrapper
@@ -58,14 +61,16 @@
     [tcoll key val]
     (if (vector? key)
       (. node setAttributeNS (first key) (name (second key)) val)
-      (. node setAttribute (name key) val)))
+      (. node setAttribute (name key) val))
+    tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
     (if (vector? key)
       (. node removeAttributeNS (first key) (name (second key)))
-      (. node removeAttribute (name key)))))
+      (. node removeAttribute (name key)))
+    tcoll))
 
 (extend-type Attrs
   ILookup
@@ -89,12 +94,14 @@
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (aset (. node -style) (name key) val))
+    (aset (. node -style) (name key) val)
+    tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (aset (. node -style) (name key) "")))
+    (aset (. node -style) (name key) "")
+    tcoll))
 
 (extend-type Styles
   ILookup
@@ -117,12 +124,14 @@
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (aset node (name key) val))
+    (aset node (name key) val)
+    tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (aset node (name key) nil)))
+    (aset node (name key) nil)
+    tcoll))
 
 (extend-type Props
   ILookup
