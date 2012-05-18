@@ -89,9 +89,10 @@
   ILookup
   (-lookup
     ([o k]
-     (if (vector? k)
-       (. (-underlying o) getAttributeNS (first k) (name (second k)))
-       (. (-underlying o) getAttribute (name k))))
+     (let [val (if (vector? k)
+                 (. (-underlying o) getAttributeNS (first k) (name (second k)))
+                 (. (-underlying o) getAttribute (name k)))]
+       (if (= "" val) nil val)))
     ([o k not-found]
      (or (-lookup o k) not-found))))
 

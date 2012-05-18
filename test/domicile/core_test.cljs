@@ -33,14 +33,20 @@
         (expect eq "abc" (:id attrs))
         (expect eq nil (:class attrs))
         (expect eq "abc" (get attrs :id :not-found))
-        (expect eq :not-found (get attrs :title :not-found))))
+        (expect eq :not-found (get attrs :title :not-found))
+
+        (. node setAttributeNS dom/xlinkns "xlink:href" "#here")
+        (expect eq "#here" (get attrs [dom/xlinkns :href]))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
         (expect eq attrs (assoc! attrs :id "abc"))
         (expect eq "abc" (. node getAttribute "id"))
         (assoc! attrs :id "def")
-        (expect eq "def" (. node getAttribute "id"))))
+        (expect eq "def" (. node getAttribute "id"))
+
+        (expect eq attrs (assoc! attrs [dom/xlinkns :href] "#here"))
+        (expect eq "#here" (. node getAttributeNS dom/xlinkns "href"))))
     (should "implement ITransientMap"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
@@ -48,7 +54,11 @@
         (expect eq attrs (dissoc! attrs :id))
         (expect eq nil (. node getAttribute "id"))
         (dissoc! attrs :id)
-        (expect eq nil (. node getAttribute "id")))))
+        (expect eq nil (. node getAttribute "id"))
+
+        (. node setAttributeNS dom/xlinkns "href" "#here")
+        (expect eq attrs (dissoc! attrs [dom/xlinkns :href]))
+        (expect eq "" (. node getAttributeNS dom/xlinkns "href")))))
 
   (describe "Styles"
     (should "implement ILookup"
