@@ -106,10 +106,10 @@
         (expect type-eq dom/DomList (:classList props)))))
 
   (describe "SvgList"
-    :let [points #(let [node (. js/document createElementNS svg/svgns "polygon")]
+    :let [points #(let [node (. js/document createElementNS dom/svgns "polygon")]
                     (. node setAttribute "points" "0 0 100 100 20 80")
                     (svg/svg-list (.. node -points)))
-          root (. js/document createElementNS svg/svgns "svg")
+          root (. js/document createElementNS dom/svgns "svg")
           point (let [pt (. root createSVGPoint)]
                   (set! (. pt -x) 3)
                   (set! (. pt -y) 9)
@@ -145,7 +145,7 @@
   (describe "SvgProps"
     (should "implement ILookup"
       ;; prop -baseVal -value
-      (let [node (. js/document createElementNS svg/svgns "rect")
+      (let [node (. js/document createElementNS dom/svgns "rect")
             props (svg/props node)]
         (set! (.. node -x -baseVal -value) 10)
         (expect eq 10 (:x props))
@@ -153,25 +153,25 @@
         (expect eq 10 (get props :x :not-found))
         (expect eq :not-found (get props :bar :not-found)))
       ;; prop -baseVal
-      (let [node (. js/document createElementNS svg/svgns "path")
+      (let [node (. js/document createElementNS dom/svgns "path")
             props (svg/props node)]
         (. node setAttribute "pathLength" "3")
         (expect eq 3 (:pathLength props)))
       ;; prop -baseVal (list)
-      (let [node (. js/document createElementNS svg/svgns "polyline")
+      (let [node (. js/document createElementNS dom/svgns "polyline")
             props (svg/props node)]
         (. node setAttribute "points" "0 0 100 100 20 80")
         (expect type-eq svg/SvgList (:points props))
         (expect eq 3 (count (:points props)))))
     (should "implement ITransientAssociative"
-      (let [node (. js/document createElementNS svg/svgns "rect")
+      (let [node (. js/document createElementNS dom/svgns "rect")
             props (svg/props node)]
         (expect eq props (assoc! props :x 10))
         (expect eq 10 (.. node -x -baseVal -value))
         (assoc! props :x 11)
         (expect eq 11 (.. node -x -baseVal -value))))
     (should "wrap svg lists"
-      (let [node (. js/document createElementNS svg/svgns "polygon")
+      (let [node (. js/document createElementNS dom/svgns "polygon")
             props (svg/props node)]
         (. node setAttribute "points" "0 0 100 100 20 80")
         (expect type-eq svg/SvgList (:points props))))))

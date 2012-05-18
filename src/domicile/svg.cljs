@@ -2,9 +2,6 @@
   (:require
     [domicile.core :as dom]))
 
-(def svgns
-  "http://www.w3.org/2000/svg")
-
 (deftype SvgList [list]
   dom/Wrapper
   (-underlying [_] list)

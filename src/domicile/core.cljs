@@ -2,6 +2,19 @@
   (:require
     [goog :as goog]))
 
+(def xhtmlns
+  "http://www.w3.org/1999/xhtml")
+
+(def svgns
+  "http://www.w3.org/2000/svg")
+
+(def xlinkns
+  "http://www.w3.org/1999/xlink")
+
+(def xmlns
+  "http://www.w3.org/XML/1998/namespace")
+
+
 (extend-type js/Node
   IHash
   (-hash [o] (goog/getUid o)))
