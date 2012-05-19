@@ -12,4 +12,5 @@
   :plugins [[lein-cst "0.3.1"]]
 
   :cst
-  {:suites [domicile.core-test/core-tests]})
+  {:suites [domicile.core-test/core-tests
+            domicile.create-test/create-tests]})

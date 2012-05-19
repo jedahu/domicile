@@ -68,6 +68,19 @@
   dom/Wrapper
   (-underlying [_] node)
 
+  ITransientCollection
+  (-conj!
+    [tcoll o]
+    (if (satisfies? IMapEntry o)
+      (-assoc! tcoll (key o) (val o))
+      (do
+        (doseq [e o]
+          (-assoc! tcoll (key e) (val e)))
+        tcoll)))
+  (-persistent!
+    [tcoll]
+    (throw (js/Error. "Deliberately not implemented.")))
+
   ITransientAssociative
   (-assoc!
     [tcoll key val]

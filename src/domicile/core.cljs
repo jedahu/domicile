@@ -69,6 +69,26 @@
   Wrapper
   (-underlying [_] node)
 
+  ITransientCollection
+  (-conj!
+    [tcoll o]
+    (if (satisfies? IMapEntry o)
+      (-assoc! tcoll (key o) (val o))
+      (do
+        (doseq [e o]
+          (-assoc! tcoll (key e) (val e)))
+        tcoll)))
+  (-persistent!
+    [tcoll]
+    (let [map (transient {})]
+      (doseq [a (dom-list (. node -attributes))]
+        (assoc! map
+                (if-let [ns (. a -namespaceURI)]
+                  [ns (keyword (. a -localName))]
+                  (keyword (. a -localName)))
+                (. a -value)))
+      (persistent! map)))
+
   ITransientAssociative
   (-assoc!
     [tcoll key val]
@@ -105,6 +125,23 @@
   Wrapper
   (-underlying [_] node)
 
+  ITransientCollection
+  (-conj!
+    [tcoll o]
+    (if (satisfies? IMapEntry o)
+      (-assoc! tcoll (key o) (val o))
+      (do
+        (doseq [e o]
+          (-assoc! tcoll (key e) (val e)))
+        tcoll)))
+  (-persistent!
+    [tcoll]
+    (let [style (. node -style)]
+      (into {} (for [k (js-keys style)
+                     :let [v (aget style k)]
+                     :when (and v (not= "" v))]
+                 [(keyword k) v]))))
+
   ITransientAssociative
   (-assoc!
     [tcoll key val]
@@ -135,6 +172,19 @@
   Wrapper
   (-underlying [_] node)
 
+  ITransientCollection
+  (-conj!
+    [tcoll o]
+    (if (satisfies? IMapEntry o)
+      (-assoc! tcoll (key o) (val o))
+      (do
+        (doseq [e o]
+          (-assoc! tcoll (key e) (val e)))
+        tcoll)))
+  (-persistent!
+    [tcoll]
+    (throw (js/Error. "Deliberately not implemented.")))
+
   ITransientAssociative
   (-assoc!
     [tcoll key val]
@@ -161,3 +211,10 @@
 (defn props
   [node]
   (when node (Props. node)))
+
+
+(defn merge!
+  [map & maps]
+  (doseq [m maps]
+    (conj! map m))
+  map)

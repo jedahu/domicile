@@ -4,7 +4,8 @@
     [domicile.svg :as svg]
     [menodora.core :as mc])
   (:use
-    [menodora.predicates :only [eq type-eq]])
+    [clojure.set :only [difference]]
+    [menodora.predicates :only [eq type-eq truthy]])
   (:use-macros
     [menodora :only [defsuite describe should expect]]))
 
@@ -37,6 +38,16 @@
 
         (. node setAttributeNS dom/xlinkns "xlink:href" "#here")
         (expect eq "#here" (get attrs [dom/xlinkns :href]))))
+    (should "implement ITransientCollection"
+      (let [node (. js/document createElement "div")
+            attrs (dom/attrs node)]
+        (expect eq attrs (conj! attrs [:id "abc"]))
+        (expect eq "abc" (. node getAttribute "id"))
+        (expect eq attrs (conj! attrs {:id "def" [dom/xlinkns :href] "#here"}))
+        (expect eq "def" (. node getAttribute "id"))
+        (expect eq "#here" (. node getAttributeNS dom/xlinkns "href"))
+
+        (expect eq {:id "def" [dom/xlinkns :href] "#here"} (persistent! attrs))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
@@ -69,6 +80,17 @@
         (expect eq nil (:border css))
         (expect eq "red" (get css :color :not-found))
         (expect eq :not-found (get css :background :not-found))))
+    (should "implement ITransientCollection"
+      (let [node (. js/document createElement "div")
+            css (dom/css node)]
+        (expect eq css (conj! css [:color "red"]))
+        (expect eq "red" (.. node -style -color))
+        (expect eq css (conj! css {:color "blue" :background "yellow"}))
+        (expect eq "blue" (.. node -style -color))
+        (expect eq "yellow" (.. node -style -background))
+
+        (expect eq #{} (difference (set {:color "blue" :background "yellow"})
+                                   (set (persistent! css))))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             css (dom/css node)]
@@ -94,6 +116,14 @@
         (expect eq nil (:bar props))
         (expect eq "abc" (get props :foo :not-found))
         (expect eq :not-found (get props :bar :not-found))))
+    (should "implement ITransientCollection"
+      (let [node (. js/document createElement "div")
+            props (dom/props node)]
+        (expect eq props (conj! props [:innerText "hello"]))
+        (expect eq "hello" (. node -innerText))
+        (expect eq props (conj! props {:innerText "world" :title "greeting"}))
+        (expect eq "world" (. node -innerText))
+        (expect eq "greeting" (. node -title))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             props (dom/props node)]
@@ -173,6 +203,14 @@
         (. node setAttribute "points" "0 0 100 100 20 80")
         (expect type-eq svg/SvgList (:points props))
         (expect eq 3 (count (:points props)))))
+    (should "implement ITransientCollection"
+      (let [node (. js/document createElementNS dom/svgns "rect")
+            props (svg/props node)]
+        (expect eq props (conj! props [:x 10]))
+        (expect eq 10 (.. node -x -baseVal -value))
+        (expect eq props (conj! props {:x 11 :y 22}))
+        (expect eq 11 (.. node -x -baseVal -value))
+        (expect eq 22 (.. node -y -baseVal -value))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElementNS dom/svgns "rect")
             props (svg/props node)]
