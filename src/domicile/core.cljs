@@ -211,10 +211,3 @@
 (defn props
   [node]
   (when node (Props. node)))
-
-
-(defn merge!
-  [map & maps]
-  (doseq [m maps]
-    (conj! map m))
-  map)
