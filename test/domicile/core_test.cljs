@@ -107,6 +107,32 @@
         (dissoc! css :color)
         (expect eq "" (. css -color)))))
 
+  (describe "computed styles"
+    (should "implement ILookup"
+      (let [node (. js/document -body)
+            css (. js/window getComputedStyle node)]
+        (set! (.. node -style -color) "red")
+        (expect eq "rgb(255, 0, 0)" (:color css))
+        (expect eq "0px none rgb(255, 0, 0)" (:border css))
+        (expect eq "rgb(255, 0, 0)" (get css :color :not-found))))
+    (should "implement ITransientCollection"
+      (let [node (. js/document -body)
+            css (. js/window getComputedStyle node)]
+        (expect eq :error (try (conj! css [:color "red"])
+                            (catch js/Object e :error)))
+
+        (expect type-eq PersistentHashMap (persistent! css))))
+    (should "implement ITransientAssociative"
+      (let [node (. js/document createElement "div")
+            css (. js/window getComputedStyle node)]
+        (expect eq :error (try (assoc! css :color "red")
+                            (catch js/Object e :error)))))
+    (should "implement ITransientMap"
+      (let [node (. js/document createElement "div")
+            css (. js/window getComputedStyle node)]
+        (expect eq :error (try (dissoc! css :color)
+                            (catch js/Object e :error))))))
+
   (describe "Props"
     (should "implement ILookup"
       (let [node (. js/document createElement "div")
