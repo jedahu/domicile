@@ -37,7 +37,11 @@
         (expect eq :not-found (get attrs :title :not-found))
 
         (. node setAttributeNS dom/xlinkns "xlink:href" "#here")
-        (expect eq "#here" (get attrs [dom/xlinkns :href]))))
+        (expect eq "#here" (get attrs [dom/xlinkns :href]))
+        (expect eq "#here" (get attrs [:xlink :href]))
+        (expect eq "#here" (get attrs [:xlink "href"]))
+        (expect eq "#here" (get attrs [dom/xlinkns "href"]))
+        (expect eq "#here" (:xlink:href attrs))))
     (should "implement ITransientCollection"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
@@ -46,8 +50,18 @@
         (expect eq attrs (conj! attrs {:id "def" [dom/xlinkns :href] "#here"}))
         (expect eq "def" (. node getAttribute "id"))
         (expect eq "#here" (. node getAttributeNS dom/xlinkns "href"))
+        (dorun
+          (for [[k n] [[[dom/xlinkns :href] 1]
+                       [[:xlink :href] 2]
+                       [[:xlink "href"] 3]
+                       [[dom/xlinkns "href"] 4]
+                       [:xlink:href 5]]
+                :let [id (str "#here" n)]]
+            (do
+              (expect eq attrs (conj! attrs [k id]))
+              (expect eq id (. node getAttributeNS dom/xlinkns "href")))))
 
-        (expect eq {:id "def" [dom/xlinkns :href] "#here"} (persistent! attrs))))
+        (expect eq {:id "def" :xlink:href "#here5"} (persistent! attrs))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
