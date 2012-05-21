@@ -65,9 +65,9 @@
   (when list (DomList. list)))
 
 
-(deftype Attrs [node]
+(deftype Attrs [elem]
   Wrapper
-  (-underlying [_] node)
+  (-underlying [_] elem)
 
   ITransientCollection
   (-conj!
@@ -81,7 +81,7 @@
   (-persistent!
     [tcoll]
     (let [map (transient {})]
-      (doseq [a (dom-list (. node -attributes))]
+      (doseq [a (dom-list (. elem -attributes))]
         (assoc! map
                 (if-let [ns (. a -namespaceURI)]
                   [ns (keyword (. a -localName))]
@@ -93,16 +93,16 @@
   (-assoc!
     [tcoll key val]
     (if (vector? key)
-      (. node setAttributeNS (first key) (name (second key)) val)
-      (. node setAttribute (name key) val))
+      (. elem setAttributeNS (first key) (name (second key)) val)
+      (. elem setAttribute (name key) val))
     tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
     (if (vector? key)
-      (. node removeAttributeNS (first key) (name (second key)))
-      (. node removeAttribute (name key)))
+      (. elem removeAttributeNS (first key) (name (second key)))
+      (. elem removeAttribute (name key)))
     tcoll))
 
 (extend-type Attrs
@@ -117,8 +117,8 @@
      (or (-lookup o k) not-found))))
 
 (defn attrs
-  [node]
-  (when node (Attrs. node)))
+  [elem]
+  (when elem (Attrs. elem)))
 
 (extend-type js/CSSStyleDeclaration
   ITransientCollection

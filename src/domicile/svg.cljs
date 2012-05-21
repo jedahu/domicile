@@ -64,9 +64,9 @@
   (when list (SvgList. list)))
 
 
-(deftype SvgProps [node]
+(deftype SvgProps [elem]
   dom/Wrapper
-  (-underlying [_] node)
+  (-underlying [_] elem)
 
   ITransientCollection
   (-conj!
@@ -84,7 +84,7 @@
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (if-let [prop (aget node (name key))]
+    (if-let [prop (aget elem (name key))]
       (cond
         (. prop -value)
         (set! (. prop -value) val)
@@ -103,8 +103,8 @@
 
             :else (set! (. prop -baseVal) val)))
 
-        :else (aset node (name key) val))
-      (aset node (name key) val))
+        :else (aset elem (name key) val))
+      (aset elem (name key) val))
     tcoll))
 
 (extend-type SvgProps
@@ -131,5 +131,5 @@
      (or (-lookup o k) not-found))))
 
 (defn props
-  [node]
-  (when node (SvgProps. node)))
+  [elem]
+  (when elem (SvgProps. elem)))
