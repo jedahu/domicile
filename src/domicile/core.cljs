@@ -120,11 +120,7 @@
   [node]
   (when node (Attrs. node)))
 
-
-(deftype Styles [node]
-  Wrapper
-  (-underlying [_] node)
-
+(extend-type js/CSSStyleDeclaration
   ITransientCollection
   (-conj!
     [tcoll o]
@@ -136,36 +132,30 @@
         tcoll)))
   (-persistent!
     [tcoll]
-    (let [style (. node -style)]
-      (into {} (for [k (js-keys style)
-                     :let [v (aget style k)]
-                     :when (and v (not= "" v))]
-                 [(keyword k) v]))))
+    (into {} (for [k (js-keys tcoll)
+                   :let [v (aget tcoll k)]
+                   :when (and v (not= "" v))]
+               [(keyword k) v])))
 
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (aset (. node -style) (name key) val)
+    (aset tcoll (name key) val)
     tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (aset (. node -style) (name key) "")
-    tcoll))
+    (aset tcoll (name key) "")
+    tcoll)
 
-(extend-type Styles
   ILookup
   (-lookup
     ([o k]
-     (let [val (aget (. (-underlying o) -style) (name k))]
+     (let [val (aget o (name k))]
        (if (= "" val) nil val)))
     ([o k not-found]
      (or (-lookup o k) not-found))))
-
-(defn css
-  [node]
-  (when node (Styles. node)))
 
 
 (deftype Props [node]

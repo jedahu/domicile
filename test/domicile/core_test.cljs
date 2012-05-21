@@ -74,38 +74,38 @@
   (describe "Styles"
     (should "implement ILookup"
       (let [node (. js/document createElement "div")
-            css (dom/css node)]
-        (set! (.. node -style -color) "red")
+            css (. node -style)]
+        (set! (. css -color) "red")
         (expect eq "red" (:color css))
         (expect eq nil (:border css))
         (expect eq "red" (get css :color :not-found))
         (expect eq :not-found (get css :background :not-found))))
     (should "implement ITransientCollection"
       (let [node (. js/document createElement "div")
-            css (dom/css node)]
+            css (. node -style)]
         (expect eq css (conj! css [:color "red"]))
-        (expect eq "red" (.. node -style -color))
+        (expect eq "red" (. css -color))
         (expect eq css (conj! css {:color "blue" :background "yellow"}))
-        (expect eq "blue" (.. node -style -color))
-        (expect eq "yellow" (.. node -style -background))
+        (expect eq "blue" (. css -color))
+        (expect eq "yellow" (. css -background))
 
         (expect eq #{} (difference (set {:color "blue" :background "yellow"})
                                    (set (persistent! css))))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
-            css (dom/css node)]
+            css (. node -style)]
         (expect eq css (assoc! css :color "red"))
-        (expect eq "red" (.. node -style -color))
+        (expect eq "red" (. css -color))
         (assoc! css :color "blue")
-        (expect eq "blue" (.. node -style -color))))
+        (expect eq "blue" (. css -color))))
     (should "implement ITransientMap"
       (let [node (. js/document createElement "div")
-            css (dom/css node)]
-        (set! (.. node -style -color) "red")
+            css (. node -style)]
+        (set! (. css -color) "red")
         (expect eq css (dissoc! css :color))
-        (expect eq "" (.. node -style -color))
+        (expect eq "" (. css -color))
         (dissoc! css :color)
-        (expect eq "" (.. node -style -color)))))
+        (expect eq "" (. css -color)))))
 
   (describe "Props"
     (should "implement ILookup"
