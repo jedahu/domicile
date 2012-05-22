@@ -2,6 +2,7 @@
   (:require
     [domicile.core :as dom]
     [domicile.svg :as svg]
+    [domicile.ns :as ns]
     [menodora.core :as mc])
   (:use
     [clojure.set :only [difference]]
@@ -36,30 +37,30 @@
         (expect eq "abc" (get attrs :id :not-found))
         (expect eq :not-found (get attrs :title :not-found))
 
-        (. node setAttributeNS dom/xlinkns "xlink:href" "#here")
-        (expect eq "#here" (get attrs [dom/xlinkns :href]))
+        (. node setAttributeNS ns/xlinkns "xlink:href" "#here")
+        (expect eq "#here" (get attrs [ns/xlinkns :href]))
         (expect eq "#here" (get attrs [:xlink :href]))
         (expect eq "#here" (get attrs [:xlink "href"]))
-        (expect eq "#here" (get attrs [dom/xlinkns "href"]))
+        (expect eq "#here" (get attrs [ns/xlinkns "href"]))
         (expect eq "#here" (:xlink:href attrs))))
     (should "implement ITransientCollection"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
         (expect eq attrs (conj! attrs [:id "abc"]))
         (expect eq "abc" (. node getAttribute "id"))
-        (expect eq attrs (conj! attrs {:id "def" [dom/xlinkns :href] "#here"}))
+        (expect eq attrs (conj! attrs {:id "def" [ns/xlinkns :href] "#here"}))
         (expect eq "def" (. node getAttribute "id"))
-        (expect eq "#here" (. node getAttributeNS dom/xlinkns "href"))
+        (expect eq "#here" (. node getAttributeNS ns/xlinkns "href"))
         (dorun
-          (for [[k n] [[[dom/xlinkns :href] 1]
+          (for [[k n] [[[ns/xlinkns :href] 1]
                        [[:xlink :href] 2]
                        [[:xlink "href"] 3]
-                       [[dom/xlinkns "href"] 4]
+                       [[ns/xlinkns "href"] 4]
                        [:xlink:href 5]]
                 :let [id (str "#here" n)]]
             (do
               (expect eq attrs (conj! attrs [k id]))
-              (expect eq id (. node getAttributeNS dom/xlinkns "href")))))
+              (expect eq id (. node getAttributeNS ns/xlinkns "href")))))
 
         (expect eq {:id "def" :xlink:href "#here5"} (persistent! attrs))))
     (should "implement ITransientAssociative"
@@ -70,8 +71,8 @@
         (assoc! attrs :id "def")
         (expect eq "def" (. node getAttribute "id"))
 
-        (expect eq attrs (assoc! attrs [dom/xlinkns :href] "#here"))
-        (expect eq "#here" (. node getAttributeNS dom/xlinkns "href"))))
+        (expect eq attrs (assoc! attrs [ns/xlinkns :href] "#here"))
+        (expect eq "#here" (. node getAttributeNS ns/xlinkns "href"))))
     (should "implement ITransientMap"
       (let [node (. js/document createElement "div")
             attrs (dom/attrs node)]
@@ -81,9 +82,9 @@
         (dissoc! attrs :id)
         (expect eq nil (. node getAttribute "id"))
 
-        (. node setAttributeNS dom/xlinkns "href" "#here")
-        (expect eq attrs (dissoc! attrs [dom/xlinkns :href]))
-        (expect eq "" (. node getAttributeNS dom/xlinkns "href")))))
+        (. node setAttributeNS ns/xlinkns "href" "#here")
+        (expect eq attrs (dissoc! attrs [ns/xlinkns :href]))
+        (expect eq "" (. node getAttributeNS ns/xlinkns "href")))))
 
   (describe "Styles"
     (should "implement ILookup"
@@ -186,10 +187,10 @@
         (expect type-eq dom/DomList (:classList props)))))
 
   (describe "SvgList"
-    :let [points #(let [node (. js/document createElementNS dom/svgns "polygon")]
+    :let [points #(let [node (. js/document createElementNS ns/svgns "polygon")]
                     (. node setAttribute "points" "0 0 100 100 20 80")
                     (svg/svg-list (.. node -points)))
-          root (. js/document createElementNS dom/svgns "svg")
+          root (. js/document createElementNS ns/svgns "svg")
           point (let [pt (. root createSVGPoint)]
                   (set! (. pt -x) 3)
                   (set! (. pt -y) 9)
@@ -225,7 +226,7 @@
   (describe "SvgProps"
     (should "implement ILookup"
       ;; prop -baseVal -value
-      (let [node (. js/document createElementNS dom/svgns "rect")
+      (let [node (. js/document createElementNS ns/svgns "rect")
             props (svg/props node)]
         (set! (.. node -x -baseVal -value) 10)
         (expect eq 10 (:x props))
@@ -233,18 +234,18 @@
         (expect eq 10 (get props :x :not-found))
         (expect eq :not-found (get props :bar :not-found)))
       ;; prop -baseVal
-      (let [node (. js/document createElementNS dom/svgns "path")
+      (let [node (. js/document createElementNS ns/svgns "path")
             props (svg/props node)]
         (. node setAttribute "pathLength" "3")
         (expect eq 3 (:pathLength props)))
       ;; prop -baseVal (list)
-      (let [node (. js/document createElementNS dom/svgns "polyline")
+      (let [node (. js/document createElementNS ns/svgns "polyline")
             props (svg/props node)]
         (. node setAttribute "points" "0 0 100 100 20 80")
         (expect type-eq svg/SvgList (:points props))
         (expect eq 3 (count (:points props)))))
     (should "implement ITransientCollection"
-      (let [node (. js/document createElementNS dom/svgns "rect")
+      (let [node (. js/document createElementNS ns/svgns "rect")
             props (svg/props node)]
         (expect eq props (conj! props [:x 10]))
         (expect eq 10 (.. node -x -baseVal -value))
@@ -252,14 +253,14 @@
         (expect eq 11 (.. node -x -baseVal -value))
         (expect eq 22 (.. node -y -baseVal -value))))
     (should "implement ITransientAssociative"
-      (let [node (. js/document createElementNS dom/svgns "rect")
+      (let [node (. js/document createElementNS ns/svgns "rect")
             props (svg/props node)]
         (expect eq props (assoc! props :x 10))
         (expect eq 10 (.. node -x -baseVal -value))
         (assoc! props :x 11)
         (expect eq 11 (.. node -x -baseVal -value))))
     (should "wrap svg lists"
-      (let [node (. js/document createElementNS dom/svgns "polygon")
+      (let [node (. js/document createElementNS ns/svgns "polygon")
             props (svg/props node)]
         (. node setAttribute "points" "0 0 100 100 20 80")
         (expect type-eq svg/SvgList (:points props))))))

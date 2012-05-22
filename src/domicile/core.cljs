@@ -1,67 +1,10 @@
 (ns domicile.core
   (:require
+    [domicile.ns :as ns]
     [clojure.string :as str]
     [goog :as goog])
   (:use
     [clojure.set :only [map-invert]]))
-
-(def xhtmlns
-  "http://www.w3.org/1999/xhtml")
-
-(def svgns
-  "http://www.w3.org/2000/svg")
-
-(def xlinkns
-  "http://www.w3.org/1999/xlink")
-
-(def xmlns
-  "http://www.w3.org/XML/1998/namespace")
-
-(def default-ns-prefixes
-  {:xhtml xhtmlns
-   :svg svgns
-   :xlink xlinkns
-   :xml xmlns})
-
-(def ns-prefixes
-  (atom {:uri default-ns-prefixes
-         :prefix (map-invert default-ns-prefixes)}))
-
-(defn add-ns-prefixes!
-  [& {:as mappings}]
-  (swap! ns-prefixes
-         (fn [old]
-           {:uri (conj (:uri old) mappings)
-            :prefix (conj (:prefix old) (map-invert mappings))})))
-
-(defn ns-uri
-  [o]
-  (cond
-    (keyword? o) (get-in @ns-prefixes [:uri o])
-    (string? o) o
-    :else (throw (js/Error. "Not a namespace or ns prefix.."))))
-
-(defn normalize-attr-key
-  [key]
-  (cond
-    (string? key) [nil key]
-    (vector? key) [(ns-uri (first key)) (name (second key))]
-    (keyword? key) (let [[uri|k k :as vect] (str/split (name key) #":")]
-                     (if k
-                       [(ns-uri (keyword uri|k)) k]
-                       [nil uri|k]))
-    (instance? js/Attr key) [(. key -namespaceURI) (. key -localName)]
-    :else (throw (js/Error. "Not an attribute key."))))
-
-(defn prefix-attr-key
-  [key]
-  (let [[ns k] (normalize-attr-key key)]
-    (if-let [prefix (get-in @ns-prefixes [:prefix ns])]
-      (keyword (str (name prefix) ":" k))
-      (if ns
-        [ns (keyword k)]
-        (keyword k)))))
-
 
 (extend-type js/Node
   IHash
@@ -131,21 +74,21 @@
     (let [map (transient {})]
       (doseq [a (dom-list (. elem -attributes))]
         (assoc! map
-                (prefix-attr-key a)
+                (ns/prefixed-name a)
                 (. a -value)))
       (persistent! map)))
 
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (let [[ns k] (normalize-attr-key key)]
+    (let [[ns k] (ns/normalize-name key)]
       (. elem setAttributeNS ns k val))
     tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (let [[ns k] (normalize-attr-key key)]
+    (let [[ns k] (ns/normalize-name key)]
       (. elem removeAttributeNS ns k))
     tcoll))
 
@@ -153,7 +96,7 @@
   ILookup
   (-lookup
     ([o k]
-     (let [[ns k] (normalize-attr-key k)
+     (let [[ns k] (ns/normalize-name k)
            val (. (-underlying o) getAttributeNS ns k)]
        (if (= "" val) nil val)))
     ([o k not-found]
