@@ -13,4 +13,5 @@
 
   :cst
   {:suites [domicile.core-test/core-tests
-            domicile.create-test/create-tests]})
+            domicile.create-test/create-tests
+            domicile.macros-test/macros-tests]})
