@@ -15,4 +15,5 @@
   {:suites [domicile.core-test/core-tests
             domicile.create-test/create-tests
             domicile.macros-test/macros-tests
-            domicile.operate-test/operate-tests]})
+            domicile.operate-test/operate-tests
+            domicile.svg.operate-test/operate-tests]})
