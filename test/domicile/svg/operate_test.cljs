@@ -31,16 +31,6 @@
         (expect type-eq js/SVGPoint (op/point pt))
         (expect eq pt (op/point pt)))))
 
-  (describe "pair<-point"
-    (should "convert an SVGPoint to a pair of numbers"
-      (let [pt (. op/svg-root createSVGPoint)]
-        (set! (. pt -x) 1)
-        (set! (. pt -y) 2)
-        (expect eq [1 2] (op/pair<-point pt))))
-    (should "return non SVGPoint arg unchanged"
-      (expect eq [3 4] (op/pair<-point [3 4]))
-      (expect eq :not-a-point (op/pair<-point :not-a-point))))
-
   (describe "point-x"
     (should "return a point's x value"
       (let [pt (. op/svg-root createSVGPoint)]
@@ -67,18 +57,6 @@
       (expect eq 13 (op/distance [0 5] [12 0]))
       (expect eq 17 (op/distance [0 8] [15 0]))
       (expect eq 25 (op/distance [7 0] [0 24]))))
-
-  (describe "vec<-rect"
-    (should "convert an SVGRect to a vector of numbers"
-      (let [rec (. op/svg-root createSVGRect)]
-        (set! (. rec -x) 1)
-        (set! (. rec -y) 2)
-        (set! (. rec -width) 3)
-        (set! (. rec -height) 4)
-        (expect eq [1 2 3 4] (op/vec<-rect rec))))
-    (should "return non SVGRect arg unchanged"
-      (expect eq [1 2 3 4] (op/vec<-rect [1 2 3 4]))
-      (expect eq :not-a-point (op/vec<-rect :not-a-point))))
 
   (describe "rect-points"
     (should "return a vector of a rect's corner points in clockwise order"
@@ -157,30 +135,16 @@
         (expect type-eq js/SVGMatrix (op/matrix mx))
         (expect eq mx (op/matrix mx)))))
 
-  (describe "vec<-mx"
-    (should "convert an SVGMatrix to a vector of numbers"
-      (let [mx (. op/svg-root createSVGMatrix)]
-        (set! (. mx -a) 1)
-        (set! (. mx -b) 2)
-        (set! (. mx -c) 3)
-        (set! (. mx -d) 4)
-        (set! (. mx -e) 5)
-        (set! (. mx -f) 6)
-        (expect eq [1 2 3 4 5 6] (op/vec<-mx mx))))
-    (should "return non SVGRect arg unchanged"
-      (expect eq [1 2 3 4 5 6] (op/vec<-mx [1 2 3 4 5 6]))
-      (expect eq :not-a-point (op/vec<-mx :not-a-point))))
-
   (describe "elem-mx"
     (should "return an SVG element's transform matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(1, 2, 3, 4, 5, 6)")
         (expect type-eq js/SVGMatrix (op/elem-mx rec))
-        (expect eq [1 2 3 4 5 6] (op/vec<-mx (op/elem-mx rec)))))
+        (expect eq [1 2 3 4 5 6] (vec (op/elem-mx rec)))))
     (should "return an identity matrix if element has none"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (expect type-eq js/SVGMatrix (op/elem-mx rec))
-        (expect eq [1 0 0 1 0 0] (op/vec<-mx (op/elem-mx rec))))))
+        (expect eq [1 0 0 1 0 0] (vec (op/elem-mx rec))))))
 
   (describe "mx-components"
     (should "return a map of matrix components"
@@ -207,13 +171,11 @@
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (op/set-elem-mx! rec [1 2 3 4 5 6])
         (expect eq [1 2 3 4 5 6]
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix)))))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the set matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
-        (expect eq (op/vec<-mx (op/set-elem-mx! rec [1 2 3 4 5 6]))
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix))))))
+        (expect eq (vec (op/set-elem-mx! rec [1 2 3 4 5 6]))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix))))))
 
   (describe "elem*mx!"
     (should "multiply an element's matrix by another matrix"
@@ -221,14 +183,12 @@
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
         (op/elem*mx! rec [1 0 0 1 2 0.5])
         (expect eq [-4, 0, 0, 0.5, 2, -19.75]
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix)))))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the updated matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (expect eq (op/vec<-mx (op/elem*mx! rec [1 0 0 1 2 0.5]))
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix))))))
+        (expect eq (vec (op/elem*mx! rec [1 0 0 1 2 0.5]))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix))))))
 
   (describe "mx*elem!"
     (should "multiply another matrix by an element's matrix"
@@ -236,14 +196,12 @@
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
         (op/mx*elem! [1 0 0 1 2 0.5] rec)
         (expect eq [-4, 0, 0, 0.5, 12, -19.5]
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix)))))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the updated matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (expect eq (op/vec<-mx (op/mx*elem! [1 0 0 1 2 0.5] rec))
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix))))))
+        (expect eq (vec (op/mx*elem! [1 0 0 1 2 0.5] rec))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix))))))
 
   (describe "clear-elem-mx!"
     :let [rec #(let [rec (. js/document createElementNS ns/svgns "rect")]
@@ -253,26 +211,21 @@
       (let [rec (rec)]
         (op/clear-elem-mx! rec)
         (expect eq [1 0 0 1 0 0]
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix)))))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the new identity matrix"
       (let [rec (rec)]
-        (expect eq (op/vec<-mx (op/clear-elem-mx! rec))
-          (op/vec<-mx
-            (.. rec -transform -baseVal (consolidate) -matrix))))))
+        (expect eq (vec (op/clear-elem-mx! rec))
+          (vec (.. rec -transform -baseVal (consolidate) -matrix))))))
 
   (describe "transform-point"
     (should "transform a point by a matrix"
       (expect eq [6 10]
-        (op/pair<-point
-          (op/transform-point [3 2] (op/matrix 1 0 0 1 3 8))))))
+        (vec (op/transform-point [3 2] (op/matrix 1 0 0 1 3 8))))))
 
   (describe "transform-rect"
     (should "transform a rect by a matrix"
       (expect eq [[5 4] [8 4] [16 12] [13 12]]
-        (map op/pair<-point
-             (op/vec<-rect
-               (op/transform-rect [1 2 3 4] (op/matrix 1 0 2 2 0 0)))))))
+        (map vec (op/transform-rect [1 2 3 4] (op/matrix 1 0 2 2 0 0))))))
 
   (describe "with-g-wrap"
     :let [a (. js/document createElementNS ns/svgns "g")
@@ -307,20 +260,20 @@
                 (set! (.. bb1 -height -baseVal -value) (.. elem (getBBox) -height))
                 (. bb1 setAttribute "stroke" "red")
                 (. bb1 setAttribute "fill" "none")
-                (let [[a1 b1 c1 d1 e1 f1 :as mx1] (op/vec<-mx (op/elem-mx elem))
-                      [x1 y1 w1 h1 :as bb1] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                (let [[a1 b1 c1 d1 e1 f1 :as mx1] (op/elem-mx elem)
+                      [x1 y1 w1 h1 :as bb1] (op/with-g-wrap elem #(. % getBBox))
                       [cx1 cy1] (op/rect-center bb1)
-                      [a2 b2 c2 d2 e2 f2 :as mx2] (op/vec<-mx (op/center-origin! elem))
-                      [x2 y2 w2 h2 :as bb2] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                      [a2 b2 c2 d2 e2 f2 :as mx2] (op/center-origin! elem)
+                      [x2 y2 w2 h2 :as bb2] (op/with-g-wrap elem #(. % getBBox))
                       [cx2 cy2] (op/rect-center bb2)
-                      [a3 b3 c3 d3 e3 f3 :as mx3] (op/vec<-mx (op/center-origin! elem))
-                      [x3 y3 w3 h3 :as bb3] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                      [a3 b3 c3 d3 e3 f3 :as mx3] (op/center-origin! elem)
+                      [x3 y3 w3 h3 :as bb3] (op/with-g-wrap elem #(. % getBBox))
                       [cx3 cy3] (op/rect-center bb3)]
                   (expect eq [a1 b1 c1 d1] [a2 b2 c2 d2])
                   (expect eq [a2 b2 c2 d2] [a3 b3 c3 d3])
-                  (expect eq [a1 b1 c1 d1 (+ e1 cx1) (+ f1 cy1)] mx2)
-                  (expect eq bb1 bb2)
-                  (expect eq bb2 bb3)
+                  (expect eq [a1 b1 c1 d1 (+ e1 cx1) (+ f1 cy1)] (vec mx2))
+                  (expect eq (vec bb1) (vec bb2))
+                  (expect eq (vec bb2) (vec bb3))
                   (expect eq [cx1 cy1] [cx2 cy2])
                   (expect eq [cx2 cy2] [cx3 cy3])
                   (expect eq [0 0] (op/rect-center (. elem getBBox))))
@@ -364,6 +317,42 @@
         (set! (.. img -y -baseVal -value) 60)
         (set! (.. img -width -baseVal -value) 70)
         (set! (.. img -height -baseVal -value) 30)
-        (test-elem img)))))
+        (test-elem img))))
+
+  (describe "SVGPoint"
+    (should "destructure"
+      (let [pt (. op/svg-root createSVGPoint)]
+        (set! (. pt -x) 1)
+        (set! (. pt -y) 2)
+        (let [[x y] pt]
+          (expect eq [1 2] [x y]))
+        (let [{:keys [x y]} pt]
+          (expect eq [1 2] [x y])))))
+
+  (describe "SVGRect"
+    (should "destructure"
+      (let [rec (. op/svg-root createSVGRect)]
+        (set! (. rec -x) 1)
+        (set! (. rec -y) 2)
+        (set! (. rec -width) 3)
+        (set! (. rec -height) 4)
+        (let [[x y w h] rec]
+          (expect eq [1 2 3 4] [x y w h]))
+        (let [{:keys [x y w h]} rec]
+          (expect eq [1 2 3 4] [x y w h])))))
+
+  (describe "SVGMatrix"
+    (should "destructure"
+      (let [mx (. op/svg-root createSVGMatrix)]
+        (set! (. mx -a) 1)
+        (set! (. mx -b) 2)
+        (set! (. mx -c) 3)
+        (set! (. mx -d) 4)
+        (set! (. mx -e) 5)
+        (set! (. mx -f) 6)
+        (let [[a b c d e f] mx]
+          (expect eq [1 2 3 4 5 6] [a b c d e f]))
+        (let [{:keys [a b c d e f]} mx]
+          (expect eq [1 2 3 4 5 6] [a b c d e f]))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

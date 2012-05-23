@@ -8,6 +8,144 @@
 
 (def svg-root (. js/document createElementNS ns/svgns "svg"))
 
+(extend-type js/SVGPoint
+  ISeqable
+  (-seq [pt] (-seq [(. pt -x) (. pt -y)]))
+
+  ICounted
+  (-count [pt] 2)
+
+  ITransientAssociative
+  (-assoc!
+    [pt key val]
+    (cond
+      (#{:x 0} key) (set! (. pt -x) val)
+      (#{:y 1} key) (set! (. pt -y) val)
+      :else (throw (js/Error. (str "No such key for SVGPoint: " key))))
+    pt)
+
+  IIndexed
+  (-nth
+    ([pt n not-found]
+     (condp = n
+       0 (. pt -x)
+       1 (. pt -y)
+       :else nil))
+    ([pt n]
+     (or (-nth pt n nil)
+         (throw (js/Error. "Two fields in a point.")))))
+
+  ILookup
+  (-lookup
+    ([pt key not-found]
+     (cond
+       (#{:x 0} key) (. pt -x)
+       (#{:y 1} key) (. pt -y)
+       :else not-found))
+    ([pt key]
+     (or (-lookup pt key nil)
+         (throw (js/Error. (str "No such key for SVGPoint: " key)))))))
+
+
+(extend-type js/SVGRect
+  ISeqable
+  (-seq [rec] (-seq [(. rec -x) (. rec -y)
+                     (. rec -width) (. rec -height)]))
+
+  ICounted
+  (-count [pt] 4)
+
+  ITransientAssociative
+  (-assoc!
+    [rec key val]
+    (cond
+      (#{:x 0} key) (set! (. rec -x) val)
+      (#{:y 1} key) (set! (. rec -y) val)
+      (#{:w 2} key) (set! (. rec -width) val)
+      (#{:h 3} key) (set! (. rec -height) val)
+      :else (throw (js/Error. (str "No such key for SVGRect: " key))))
+    rec)
+
+  IIndexed
+  (-nth
+    ([rec n not-found]
+     (condp = n
+       0 (. rec -x)
+       1 (. rec -y)
+       2 (. rec -width)
+       3 (. rec -height)
+       :else not-found))
+    ([pt n]
+     (or (-nth rec n nil)
+         (throw (js/Error. "Four fields in a rect.")))))
+
+  ILookup
+  (-lookup
+    ([rec key not-found]
+     (cond
+       (#{:x 0} key) (. rec -x)
+       (#{:y 1} key) (. rec -y)
+       (#{:w 2} key) (. rec -width)
+       (#{:h 3} key) (. rec -height)
+       :else not-found))
+    ([rec key]
+     (or (-lookup rec key nil)
+         (throw (js/Error. (str "No such key for SVGRect: " key)))))))
+
+
+(extend-type js/SVGMatrix
+  ISeqable
+  (-seq [mx] (-seq [(. mx -a) (. mx -b)
+                    (. mx -c) (. mx -d)
+                    (. mx -e) (. mx -f)]))
+
+  ICounted
+  (-count [pt] 6)
+
+  ITransientAssociative
+  (-assoc!
+    [mx key val]
+    (cond
+      (#{:a 0} key) (set! (. mx -a) val)
+      (#{:b 1} key) (set! (. mx -b) val)
+      (#{:c 2} key) (set! (. mx -c) val)
+      (#{:d 3} key) (set! (. mx -d) val)
+      (#{:e 4} key) (set! (. mx -e) val)
+      (#{:f 5} key) (set! (. mx -f) val)
+      :else (throw (js/Error. (str "No such key for SVGMatrix: " key))))
+    mx)
+
+  IIndexed
+  (-nth
+    ([mx n not-found]
+     (condp = n
+       0 (. mx -a)
+       1 (. mx -b)
+       2 (. mx -c)
+       3 (. mx -d)
+       4 (. mx -e)
+       5 (. mx -f)
+       :else not-found))
+    ([pt n]
+     (or (-nth mx n nil)
+         (throw (js/Error. "Six fields in a matrix.")))))
+
+  ILookup
+  (-lookup
+    ([mx key not-found]
+     (cond
+       (#{:a 0} key) (. mx -a)
+       (#{:b 1} key) (. mx -b)
+       (#{:c 2} key) (. mx -c)
+       (#{:d 3} key) (. mx -d)
+       (#{:e 4} key) (. mx -e)
+       (#{:f 5} key) (. mx -f)
+       :else not-found))
+    ([mx key]
+     (or (-lookup mx key nil)
+         (throw (js/Error. (str "No such key for SVGMatrix: " key)))))))
+
+
 (defn length
   ([]
    (. svg-root createSVGLength))
@@ -41,12 +179,6 @@
      xy
      (apply point xy))))
 
-(defn pair<-point
-  [pt]
-  (if (instance? js/SVGPoint pt)
-    [(. pt -x) (. pt -y)]
-    pt))
-
 (defn point-x
   [pt]
   (if (instance? js/SVGPoint pt)
@@ -66,8 +198,8 @@
 
 (defn distance
   [pt1 pt2]
-  (let [[x1 y1] (pair<-point pt1)
-        [x2 y2] (pair<-point pt2)
+  (let [[x1 y1] pt1
+        [x2 y2] pt2
         dx (- x1 x2)
         dy (- y1 y2)]
     (. js/Math sqrt (+ (* dx dx) (* dy dy)))))
@@ -87,15 +219,9 @@
      xywh
      (apply rect xywh))))
 
-(defn vec<-rect
-  [rec]
-  (if (instance? js/SVGRect rec)
-    [(. rec -x) (. rec -y) (. rec -width) (. rec -height)]
-    rec))
-
 (defn rect-points
   [rec]
-  (let [[x y w h] (vec<-rect rec)]
+  (let [[x y w h] rec]
     [[x y]
      [(+ x w) y]
      [(+ x w) (+ y h)]
@@ -103,7 +229,7 @@
 
 (defn rect-center
   [rec]
-  (let [[x y w h] (vec<-rect rec)]
+  (let [[x y w h] rec]
     [(+ x (/ w 2)) (+ y (/ h 2))]))
 
 (defn matrix
@@ -123,12 +249,6 @@
      abcdef
      (apply matrix abcdef))))
 
-(defn vec<-mx
-  [mx]
-  (if (instance? js/SVGMatrix mx)
-    [(. mx -a) (. mx -b) (. mx -c) (. mx -d) (. mx -e) (. mx -f)]
-    mx))
-
 (defn elem-mx
   [elem]
   (when-not (. elem getAttribute "transform")
@@ -137,10 +257,9 @@
 
 (defn mx-components
   [elem|mx]
-  (let [[a b c d e f] (vec<-mx
-                        (if (instance? js/SVGMatrix elem|mx)
-                          elem|mx
-                          (elem-mx elem|mx)))]
+  (let [[a b c d e f] (if (instance? js/SVGMatrix elem|mx)
+                        elem|mx
+                        (elem-mx elem|mx))]
     {:translation [e f]
      :rotation (Math/atan2 b a)
      :scale [(Math/sqrt (+ (* a a) (* b b)))
@@ -205,7 +324,7 @@
               translate (+ x cx) (+ y cy)))))
 
 (defn- center-origin-xybb! [elem xy]
-  (let [[x y _ _ :as bb] (vec<-rect (. elem getBBox))
+  (let [[x y _ _ :as bb] (. elem getBBox)
         [cx cy] (or xy (rect-center bb))]
     (conj! (svg/props elem) {:x (- x cx) :y (- y cy)})
     (set-elem-mx!
@@ -213,7 +332,7 @@
               translate cx cy))))
 
 (defn- center-origin-text! [elem xy]
-  (let [[x y w h :as bb] (vec<-rect (. elem getBBox))
+  (let [[x y w h :as bb] (. elem getBBox)
         [cx cy] (or xy (rect-center bb))]
     (if (= [0 0] [cx cy])
       (elem-mx elem)
@@ -296,8 +415,8 @@
 
 (defn rects-intersect?
   [rec1 rec2]
-  (let [[x1 y1 w1 h1] (vec<-rect rec1)
-        [x2 y2 w2 h2] (vec<-rect rec2)]
+  (let [[x1 y1 w1 h1] rec1
+        [x2 y2 w2 h2] rec2]
     (and (< x2 (+ x1 w1))
          (> (+ x2 w2) x1)
          (< y2 (+ y1 h1))
