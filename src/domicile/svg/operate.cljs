@@ -124,14 +124,14 @@
      :scale [(Math/sqrt (+ (* a a) (* b b)))
              (Math/sqrt (+ (* c c) (* d d)))]}))
 
-(defn set-elem-mx
+(defn set-elem-mx!
   [elem mx]
   (let [ts (.. elem -transform -baseVal)
         t (. ts createSVGTransformFromMatrix (matrix mx))]
     (. ts initialize t)
     (.. ts (consolidate) -matrix)))
 
-(defn elem-mx-*
+(defn elem*mx!
   [elem mx]
   (let [ts (.. elem -transform -baseVal)
         cur (elem-mx elem)
@@ -139,7 +139,7 @@
     (. ts initialize t)
     (.. ts (consolidate) -matrix)))
 
-(defn mx-elem-*
+(defn mx*elem!
   [mx elem]
   (let [ts (.. elem -transform -baseVal)
         cur (elem-mx elem)
@@ -147,7 +147,7 @@
     (. ts initialize t)
     (.. ts (consolidate) -matrix)))
 
-(defn clear-elem-mx
+(defn clear-elem-mx!
   [elem]
   (let [mx (elem-mx elem)]
     (set! (. mx -a) 1)
@@ -156,7 +156,7 @@
     (set! (. mx -d) 1)
     (set! (. mx -e) 0)
     (set! (. mx -f) 0)
-    (set-elem-mx elem mx)
+    (set-elem-mx! elem mx)
     mx))
 
 (defn transform-point
@@ -172,54 +172,54 @@
 (defprotocol CenterOrigin
   (-center-origin [node xy]))
 
-(defn- center-origin-xywh [elem]
+(defn- center-origin-xywh! [elem]
   (let [props (svg/props elem)
         {:keys [x y width height]} props
         cx (/ w 2)
         cy (/ h 2)]
     (conj! props {:x (- cx) :y (- cy)})
-    (set-elem-mx
+    (set-elem-mx!
       elem (. (elem-mx elem)
               (translate (+ x cx) (+ y cy))))))
 
-(defn- center-origin-xybb [elem xy]
+(defn- center-origin-xybb! [elem xy]
   (let [[x y _ _ :as bb] (vec<-rect (. elem getBBox))
         [cx cy] (or xy (rect-center bb))]
     (conj! (svg/props elem) {:x (- x cx) :y (- y cy)})
-    (set-elem-mx
+    (set-elem-mx!
       elem (. (elem-mx elem)
               (translate (+ cx) (+ cy))))))
 
 (extend-protocol CenterOrigin
 
   js/SVGRectElement
-  (-center-origin [elem xy]
-    (center-origin-xybb elem xy))
+  (-center-origin! [elem xy]
+    (center-origin-xybb! elem xy))
 
   js/SVGEllipseElement
-  (-center-origin [elem xy]
+  (-center-origin! [elem xy]
     (let [props (svg/props elem)
           {:keys [cx cy]} props
           [x y] (or xy [0 0])]
       (conj! props {:cx (- cx x) :cy (- cy y)})
-      (set-elem-mx
+      (set-elem-mx!
         elem (. (elem-mx elem)
                 (translate (+ cx x) (+ cy y))))))
 
   js/SVGGElement
-  (-center-origin [elem xy]
+  (-center-origin! [elem xy]
     (let [[cx cy] (or xy (rect-center (. elem getBBox)))]
       (doseq [n (dom/dom-list (. elem -childNodes))]
         (when (instance? js/Element n)
-          (set-elem-mx
+          (set-elem-mx!
             n (. (elem-mx n)
                  (translate (- cx) (- cy))))))
-      (set-elem-mx
+      (set-elem-mx!
         elem (. (elem-mx elem)
                 (translate cx cy)))))
 
   js/SVGPolygonElement
-  (-center-origin [elem xy]
+  (-center-origin! [elem xy]
     (let [[x y _ _ :as bb] (vec<-rect (. elem getBBox))
           [cx cy] (or xy (rect-center bb))
           pts (. node -points)
@@ -227,30 +227,30 @@
       (. pts clear)
       (doseq [[x y] pts*]
         (. pts appendItem (point (- x cx) (- y cy))))
-      (set-elem-mx
+      (set-elem-mx!
         elem (. (elem-mx elem)
                 (translate cx cy)))))
 
   js/SVGTextElement
-  (-center-origin [elem xy]
+  (-center-origin! [elem xy]
     ; Why is bbox.y incorrect?
     (with-g-wrap node
-      #(-center-origin % xy))
+      #(-center-origin! % xy))
     #_(let [x (.. elem -x -baseVal (getItem 0) -value)
           y (.. elem -y -baseVal (getItem 0) -value)
           [bx by _ _ :as bb] (vec<-rect (. elem getBBox))
           [cx cy] (or xy (rect-center bb))]
       (set! (.. elem -x -baseVal (getItem 0) -value) (- x cx))
       (set! (.. elem -y -baseVal (getItem 0) -value) (- y cy))
-      (set-elem-mx
+      (set-elem-mx!
         elem (. (elem-mx elem)
                 (translate (+ x cx) (+ y cy)))))))
 
-(defn center-origin
+(defn center-origin!
   "Modify and transform `node` so its origin of transformation is the center of
   its BBox."
   [node & [xy]]
-  (-center-origin node xy))
+  (-center-origin! node xy))
 
 (defn with-g-wrap [elem f]
   (let [g (. (get-document) createElementNS ns/svgns "g")

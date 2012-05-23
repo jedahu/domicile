@@ -202,62 +202,62 @@
                     :scale [4 0.5]}
           (op/mx-components rec)))))
 
-  (describe "set-elem-mx"
+  (describe "set-elem-mx!"
     (should "set an SVG element's transform matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
-        (op/set-elem-mx rec [1 2 3 4 5 6])
+        (op/set-elem-mx! rec [1 2 3 4 5 6])
         (expect eq [1 2 3 4 5 6]
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the set matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
-        (expect eq (op/vec<-mx (op/set-elem-mx rec [1 2 3 4 5 6]))
+        (expect eq (op/vec<-mx (op/set-elem-mx! rec [1 2 3 4 5 6]))
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix))))))
 
-  (describe "elem-mx-*"
+  (describe "elem*mx!"
     (should "multiply an element's matrix by another matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (op/elem-mx-* rec [1 0 0 1 2 0.5])
+        (op/elem*mx! rec [1 0 0 1 2 0.5])
         (expect eq [-4, 0, 0, 0.5, 2, -19.75]
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the updated matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (expect eq (op/vec<-mx (op/elem-mx-* rec [1 0 0 1 2 0.5]))
+        (expect eq (op/vec<-mx (op/elem*mx! rec [1 0 0 1 2 0.5]))
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix))))))
 
-  (describe "mx-elem-*"
+  (describe "mx*elem!"
     (should "multiply another matrix by an element's matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (op/mx-elem-* [1 0 0 1 2 0.5] rec)
+        (op/mx*elem! [1 0 0 1 2 0.5] rec)
         (expect eq [-4, 0, 0, 0.5, 12, -19.5]
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the updated matrix"
       (let [rec (. js/document createElementNS ns/svgns "rect")]
         (. rec setAttribute "transform" "matrix(-4, 0, 0, 0.5, 10, -20)")
-        (expect eq (op/vec<-mx (op/mx-elem-* [1 0 0 1 2 0.5] rec))
+        (expect eq (op/vec<-mx (op/mx*elem! [1 0 0 1 2 0.5] rec))
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix))))))
 
-  (describe "clear-elem-mx"
+  (describe "clear-elem-mx!"
     :let [rec #(let [rec (. js/document createElementNS ns/svgns "rect")]
                  (. rec setAttribute "transform" "matrix(1, 2, 3, 4, 5, 6)")
                  rec)]
     (should "set elem's transform matrix to the identity matrix"
       (let [rec (rec)]
-        (op/clear-elem-mx rec)
+        (op/clear-elem-mx! rec)
         (expect eq [1 0 0 1 0 0]
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix)))))
     (should "return the new identity matrix"
       (let [rec (rec)]
-        (expect eq (op/vec<-mx (op/clear-elem-mx rec))
+        (expect eq (op/vec<-mx (op/clear-elem-mx! rec))
           (op/vec<-mx
             (.. rec -transform -baseVal (consolidate) -matrix))))))
 

@@ -12,7 +12,7 @@
             "")
       #{})))
 
-(defn remove-node
+(defn remove-node!
   [node]
   (when-let [parent ( . node -parentNode)]
     (. parent removeChild node)))
