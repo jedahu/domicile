@@ -39,8 +39,8 @@
 
 (defn pointwise
   [f & pts]
-  [(apply op (map point-x pts))
-   (apply op (map point-y pts))])
+  [(apply f (map point-x pts))
+   (apply f (map point-y pts))])
 
 (defn distance
   [pt1 pt2]
@@ -65,7 +65,7 @@
      xywh
      (apply rect xywh))))
 
-(defn vect<-rect
+(defn vec<-rect
   [rec]
   (if (instance? js/SVGRect rec)
     [(. rec -x) (. rec -y) (. rec -width) (. rec -height)]
@@ -73,7 +73,7 @@
 
 (defn rect-points
   [rec]
-  (let [[x y w h] (vect<-rect rec)]
+  (let [[x y w h] (vec<-rect rec)]
     [[x y]
      [(+ x w) y]
      [(+ x w) (+ y h)]
@@ -81,7 +81,7 @@
 
 (defn rect-center
   [rec]
-  (let [[x y w h] (vect<-rect rec)]
+  (let [[x y w h] (vec<-rect rec)]
     [(+ x (/ w 2)) (+ y (/ h 2))]))
 
 (defn matrix
@@ -101,19 +101,21 @@
      abcdef
      (apply matrix abcdef))))
 
-(defn vect<-mx
+(defn vec<-mx
   [mx]
-  [(. mx -a) (. mx -b) (. mx -c) (. mx -d) (. mx -e) (. mx -f)])
+  (if (instance? js/SVGMatrix mx)
+    [(. mx -a) (. mx -b) (. mx -c) (. mx -d) (. mx -e) (. mx -f)]
+    mx))
 
 (defn elem-mx
   [elem]
   (when-not (. elem getAttribute "transform")
     (. elem setAttribute "transform" "scale(1)"))
-  (.. node -transform -baseVal (consolidate) -matrix))
+  (.. elem -transform -baseVal (consolidate) -matrix))
 
 (defn mx-components
   [elem|mx]
-  (let [[a b c d e f] (vect<-mx
+  (let [[a b c d e f] (vec<-mx
                         (if (instance? js/SVGMatrix elem|mx)
                           elem|mx
                           (elem-mx elem|mx)))]
@@ -125,22 +127,25 @@
 (defn set-elem-mx
   [elem mx]
   (let [ts (.. elem -transform -baseVal)
-        t (. ts createSVGTransformFromMatrix mx)]
-    (. tx initialize t)))
-
-(defn *-elem-mx
-  [elem mx]
-  (let [ts (.. elem -transform -baseVal)
-        cur (elem-mx elem)
-        t (. ts createSVGTransformFromMatrix (. cur multiply mx))]
-    (. ts initialize t)))
+        t (. ts createSVGTransformFromMatrix (matrix mx))]
+    (. ts initialize t)
+    (.. ts (consolidate) -matrix)))
 
 (defn elem-mx-*
   [elem mx]
   (let [ts (.. elem -transform -baseVal)
         cur (elem-mx elem)
-        t (. ts createSVGTransformFromMatrix (. mx multiply cur))]
-    (. ts initialize t)))
+        t (. ts createSVGTransformFromMatrix (. cur multiply (matrix mx)))]
+    (. ts initialize t)
+    (.. ts (consolidate) -matrix)))
+
+(defn mx-elem-*
+  [mx elem]
+  (let [ts (.. elem -transform -baseVal)
+        cur (elem-mx elem)
+        t (. ts createSVGTransformFromMatrix (. (matrix mx) multiply cur))]
+    (. ts initialize t)
+    (.. ts (consolidate) -matrix)))
 
 (defn clear-elem-mx
   [elem]
@@ -178,7 +183,7 @@
               (translate (+ x cx) (+ y cy))))))
 
 (defn- center-origin-xybb [elem xy]
-  (let [[x y _ _ :as bb] (vect<-rect (. elem getBBox))
+  (let [[x y _ _ :as bb] (vec<-rect (. elem getBBox))
         [cx cy] (or xy (rect-center bb))]
     (conj! (svg/props elem) {:x (- x cx) :y (- y cy)})
     (set-elem-mx
@@ -215,7 +220,7 @@
 
   js/SVGPolygonElement
   (-center-origin [elem xy]
-    (let [[x y _ _ :as bb] (vect<-rect (. elem getBBox))
+    (let [[x y _ _ :as bb] (vec<-rect (. elem getBBox))
           [cx cy] (or xy (rect-center bb))
           pts (. node -points)
           pts* (map pair<-point (svg/svg-list pts))]
@@ -233,7 +238,7 @@
       #(-center-origin % xy))
     #_(let [x (.. elem -x -baseVal (getItem 0) -value)
           y (.. elem -y -baseVal (getItem 0) -value)
-          [bx by _ _ :as bb] (vect<-rect (. elem getBBox))
+          [bx by _ _ :as bb] (vec<-rect (. elem getBBox))
           [cx cy] (or xy (rect-center bb))]
       (set! (.. elem -x -baseVal (getItem 0) -value) (- x cx))
       (set! (.. elem -y -baseVal (getItem 0) -value) (- y cy))
@@ -248,7 +253,7 @@
   (-center-origin node xy))
 
 (defn with-g-wrap [elem f]
-  (let [g (. (get-document) createElementNS dom/svgns "g")
+  (let [g (. (get-document) createElementNS ns/svgns "g")
         p (. elem -parentNode)]
     (. p insertBefore g elem)
     (. g appendChild elem)
@@ -259,8 +264,8 @@
 
 (defn rects-intersect?
   [rec1 rec2]
-  (let [[x1 y1 w1 h1] (vect<-rect rec1)
-        [x2 y2 w2 h2] (vect<-rect rec2)]
+  (let [[x1 y1 w1 h1] (vec<-rect rec1)
+        [x2 y2 w2 h2] (vec<-rect rec2)]
     (and (< x2 (+ x1 w1))
          (> (+ x2 w2) x1)
          (< y2 (+ y1 h1))
