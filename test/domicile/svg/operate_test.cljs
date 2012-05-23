@@ -288,6 +288,82 @@
       (expect truthy (op/rects-intersect? [0 0 9 9] [8 8 100 100]))
       (expect truthy (op/rects-intersect? [0 0 9 9] [-8 -8 9 9]))
       (expect truthy (op/rects-intersect? [0 0 9 9] [8 -8 100 9]))
-      (expect truthy (op/rects-intersect? [0 0 9 9] [-8 8 9 100])))))
+      (expect truthy (op/rects-intersect? [0 0 9 9] [-8 8 9 100]))))
+
+  (describe "center-origin!"
+    :let [test-elem
+          (fn [elem]
+            (let [svg (. js/document createElementNS ns/svgns "svg")
+                  bb1 (. js/document createElementNS ns/svgns "rect")
+                  bb2 (. js/document createElementNS ns/svgns "rect")]
+              (try
+                (.. js/document -body (appendChild svg))
+                (. svg appendChild elem)
+                (. svg appendChild bb1)
+                (. svg appendChild bb2)
+                (set! (.. bb1 -x -baseVal -value) (.. elem (getBBox) -x))
+                (set! (.. bb1 -y -baseVal -value) (.. elem (getBBox) -y))
+                (set! (.. bb1 -width -baseVal -value) (.. elem (getBBox) -width))
+                (set! (.. bb1 -height -baseVal -value) (.. elem (getBBox) -height))
+                (. bb1 setAttribute "stroke" "red")
+                (. bb1 setAttribute "fill" "none")
+                (let [[a1 b1 c1 d1 e1 f1 :as mx1] (op/vec<-mx (op/elem-mx elem))
+                      [x1 y1 w1 h1 :as bb1] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                      [cx1 cy1] (op/rect-center bb1)
+                      [a2 b2 c2 d2 e2 f2 :as mx2] (op/vec<-mx (op/center-origin! elem))
+                      [x2 y2 w2 h2 :as bb2] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                      [cx2 cy2] (op/rect-center bb2)
+                      [a3 b3 c3 d3 e3 f3 :as mx3] (op/vec<-mx (op/center-origin! elem))
+                      [x3 y3 w3 h3 :as bb3] (op/vec<-rect (op/with-g-wrap elem #(. % getBBox)))
+                      [cx3 cy3] (op/rect-center bb3)]
+                  (expect eq [a1 b1 c1 d1] [a2 b2 c2 d2])
+                  (expect eq [a2 b2 c2 d2] [a3 b3 c3 d3])
+                  (expect eq [a1 b1 c1 d1 (+ e1 cx1) (+ f1 cy1)] mx2)
+                  (expect eq bb1 bb2)
+                  (expect eq bb2 bb3)
+                  (expect eq [cx1 cy1] [cx2 cy2])
+                  (expect eq [cx2 cy2] [cx3 cy3])
+                  (expect eq [0 0] (op/rect-center (. elem getBBox))))
+                (set! (.. bb2 -x -baseVal -value) (.. elem (getBBox) -x))
+                (set! (.. bb2 -y -baseVal -value) (.. elem (getBBox) -y))
+                (set! (.. bb2 -width -baseVal -value) (.. elem (getBBox) -width))
+                (set! (.. bb2 -height -baseVal -value) (.. elem (getBBox) -height))
+                (. bb2 setAttribute "stroke" "blue")
+                (. bb2 setAttribute "fill" "none")
+                (let [oo1 (op/rect-center (op/with-g-wrap elem #(. % getBBox)))]
+                  (op/set-elem-mx!
+                    elem (.. (op/elem-mx elem)
+                           (rotate 90)
+                           (scale 2)))
+                  (expect eq oo1 (op/rect-center (op/with-g-wrap elem #(. % getBBox))))
+                  (op/set-elem-mx!
+                    elem (.. (op/elem-mx elem)
+                           (rotate -90)
+                           (scale 0.5))))
+                (catch js/Object e
+                  (throw e))
+                (finally
+                  (.. js/document -body (removeChild svg))))))]
+    (should "work for SVGTextElement"
+      (let [txt (. js/document createElementNS ns/svgns "text")]
+        (.. txt -x -baseVal (appendItem (op/length 60)))
+        (.. txt -y -baseVal (appendItem (op/length 60)))
+        (. txt setAttribute "font-size" 50)
+        (set! (. txt -textContent) "asdf")
+        (test-elem txt)))
+    (should "work for SVGRectElement"
+      (let [rec (. js/document createElementNS ns/svgns "rect")]
+        (set! (.. rec -x -baseVal -value) 60)
+        (set! (.. rec -y -baseVal -value) 60)
+        (set! (.. rec -width -baseVal -value) 70)
+        (set! (.. rec -height -baseVal -value) 30)
+        (test-elem rec)))
+    (should "work for SVGImageElement"
+      (let [img (. js/document createElementNS ns/svgns "image")]
+        (set! (.. img -x -baseVal -value) 60)
+        (set! (.. img -y -baseVal -value) 60)
+        (set! (.. img -width -baseVal -value) 70)
+        (set! (.. img -height -baseVal -value) 30)
+        (test-elem img)))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

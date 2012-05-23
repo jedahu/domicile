@@ -216,7 +216,7 @@
           (vec (map (fn [p] [(. p -x) (. p -y)]) (persistent! pts))))))
     (should "implement ITransientAssociative"
       (let [pts (points)]
-        (expect eq pts (assoc! pts point 0))
+        (expect eq pts (assoc! pts 0 point))
         (expect eq point (. (dom/underlying pts) getItem 0))))
     (should "implement ITransientVector"
       (let [pts (points)]

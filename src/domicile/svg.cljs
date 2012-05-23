@@ -34,7 +34,7 @@
   ITransientVector
   (-assoc-n!
     [tcoll n val]
-    (. list replaceItem n val)
+    (. list replaceItem val n)
     tcoll)
   (-pop!
     [tcoll]
