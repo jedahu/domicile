@@ -31,42 +31,6 @@
         (expect type-eq js/SVGPoint (op/point pt))
         (expect eq pt (op/point pt)))))
 
-  (describe "point-x"
-    (should "return a point's x value"
-      (let [pt (. op/svg-root createSVGPoint)]
-        (set! (. pt -x) 9)
-        (expect eq 9 (op/point-x pt))
-        (expect eq 9 (op/point-x [9 0]))
-        (expect eq 9 (op/point-x '(9 0))))))
-
-  (describe "point-y"
-    (should "return a point's y value"
-      (let [pt (. op/svg-root createSVGPoint)]
-        (set! (. pt -y) 8)
-        (expect eq 8 (op/point-y pt))
-        (expect eq 8 (op/point-y [0 8]))
-        (expect eq 8 (op/point-y '(0 8))))))
-
-  (describe "pointwise"
-    (should "apply a function pointwise"
-      (expect eq [6 9] (op/pointwise + [1 2] [2 3] [3 4]))))
-
-  (describe "distance"
-    (should "calculate the distance between two points"
-      (expect eq 5 (op/distance [0 3] [4 0]))
-      (expect eq 13 (op/distance [0 5] [12 0]))
-      (expect eq 17 (op/distance [0 8] [15 0]))
-      (expect eq 25 (op/distance [7 0] [0 24]))))
-
-  (describe "rect-points"
-    (should "return a vector of a rect's corner points in clockwise order"
-      (expect eq [[3 8] [14 8] [14 27] [3 27]]
-        (op/rect-points [3 8 11 19]))))
-
-  (describe "rect-center"
-    (should "return center point of rect"
-      (expect eq [8.5 17.5] (op/rect-center [3 8 11 19]))))
-
   (describe "rect"
     (should "take no args"
       (expect type-eq js/SVGRect (op/rect))
@@ -134,6 +98,238 @@
         (set! (. mx -f) 6)
         (expect type-eq js/SVGMatrix (op/matrix mx))
         (expect eq mx (op/matrix mx)))))
+
+  (describe "path-seg"
+    (should "take args"
+      (let [seg (op/path-seg :L 1 2)]
+        (expect type-eq js/SVGPathSegLinetoAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "take vector arg"
+      (let [seg (op/path-seg [:L 1 2])]
+        (expect type-eq js/SVGPathSegLinetoAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "take SVGPathSeg arg"
+      (let [seg (. op/path-elem createSVGPathSegLinetoAbs 1 2)]
+        (expect eq seg (op/path-seg seg))))
+    (should "create SVGPathSegClosePath"
+      (let [seg (op/path-seg :z)]
+        (expect type-eq js/SVGPathSegClosePath seg)))
+    (should "create SVGPathSegMovetoAbs"
+      (let [seg (op/path-seg :M 1 2)]
+        (expect type-eq js/SVGPathSegMovetoAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "create SVGPathSegMovetoRel"
+      (let [seg (op/path-seg :m 1 2)]
+        (expect type-eq js/SVGPathSegMovetoRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "create SVGPathSegLinetoAbs"
+      (let [seg (op/path-seg :L 1 2)]
+        (expect type-eq js/SVGPathSegLinetoAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "create SVGPathSegLinetoRel"
+      (let [seg (op/path-seg :l 1 2)]
+        (expect type-eq js/SVGPathSegLinetoRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "create SVGPathSegCurvetoCubicAbs"
+      (let [seg (op/path-seg :C 1 2 3 4 5 6)]
+        (expect type-eq js/SVGPathSegCurvetoCubicAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x1))
+        (expect eq 4 (. seg -y1))
+        (expect eq 5 (. seg -x2))
+        (expect eq 6 (. seg -y2))))
+    (should "create SVGPathSegCurvetoCubicRel"
+      (let [seg (op/path-seg :c 1 2 3 4 5 6)]
+        (expect type-eq js/SVGPathSegCurvetoCubicRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x1))
+        (expect eq 4 (. seg -y1))
+        (expect eq 5 (. seg -x2))
+        (expect eq 6 (. seg -y2))))
+    (should "create SVGPathSegCurvetoQuadraticAbs"
+      (let [seg (op/path-seg :Q 1 2 3 4)]
+        (expect type-eq js/SVGPathSegCurvetoQuadraticAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x1))
+        (expect eq 4 (. seg -y1))))
+    (should "create SVGPathSegCurvetoQuadraticRel"
+      (let [seg (op/path-seg :q 1 2 3 4)]
+        (expect type-eq js/SVGPathSegCurvetoQuadraticRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x1))
+        (expect eq 4 (. seg -y1))))
+    (should "create SVGPathSegArcAbs"
+      (let [seg (op/path-seg :A 1 2 3 4 5 true true)]
+        (expect type-eq js/SVGPathSegArcAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -r1))
+        (expect eq 4 (. seg -r2))
+        (expect eq 5 (. seg -angle))
+        (expect eq true (. seg -largeArcFlag))
+        (expect eq true (. seg -sweepFlag))))
+    (should "create SVGPathSegArcRel"
+      (let [seg (op/path-seg :a 1 2 3 4 5 true true)]
+        (expect type-eq js/SVGPathSegArcRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -r1))
+        (expect eq 4 (. seg -r2))
+        (expect eq 5 (. seg -angle))
+        (expect eq true (. seg -largeArcFlag))
+        (expect eq true (. seg -sweepFlag))))
+    (should "create SVGPathSegLinetoHorizontalAbs"
+      (let [seg (op/path-seg :H 9)]
+        (expect type-eq js/SVGPathSegLinetoHorizontalAbs seg)
+        (expect eq 9 (. seg -x))))
+    (should "create SVGPathSegLinetoHorizontalRel"
+      (let [seg (op/path-seg :h 9)]
+        (expect type-eq js/SVGPathSegLinetoHorizontalRel seg)
+        (expect eq 9 (. seg -x))))
+    (should "create SVGPathSegLinetoVerticalAbs"
+      (let [seg (op/path-seg :V 9)]
+        (expect type-eq js/SVGPathSegLinetoVerticalAbs seg)
+        (expect eq 9 (. seg -y))))
+    (should "create SVGPathSegLinetoVerticalRel"
+      (let [seg (op/path-seg :v 9)]
+        (expect type-eq js/SVGPathSegLinetoVerticalRel seg)
+        (expect eq 9 (. seg -y))))
+    (should "create SVGPathSegCurvetoCubicSmoothAbs"
+      (let [seg (op/path-seg :S 1 2 3 4)]
+        (expect type-eq js/SVGPathSegCurvetoCubicSmoothAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x2))
+        (expect eq 4 (. seg -y2))))
+    (should "create SVGPathSegCurvetoCubicSmoothRel"
+      (let [seg (op/path-seg :s 1 2 3 4)]
+        (expect type-eq js/SVGPathSegCurvetoCubicSmoothRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))
+        (expect eq 3 (. seg -x2))
+        (expect eq 4 (. seg -y2))))
+    (should "create SVGPathSegCurvetoQuadraticSmoothAbs"
+      (let [seg (op/path-seg :T 1 2)]
+        (expect type-eq js/SVGPathSegCurvetoQuadraticSmoothAbs seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y))))
+    (should "create SVGPathSegCurvetoQuadraticSmoothRel"
+      (let [seg (op/path-seg :t 1 2)]
+        (expect type-eq js/SVGPathSegCurvetoQuadraticSmoothRel seg)
+        (expect eq 1 (. seg -x))
+        (expect eq 2 (. seg -y)))))
+
+  (describe "SVGLengthList"
+    :let [lengths #(let [node (. js/document createElementNS ns/svgns "text")]
+                     (. node setAttribute "x" "1 2 3 4")
+                     (.. node -x -baseVal))]
+    (should "implement ISeqable"
+      (expect eq (seq [1 2 3 4]) (seq (lengths))))
+    (should "implement ICounted"
+      (expect eq 4 (count (lengths))))
+    (should "implement IReduce"
+      (expect eq 10 (reduce + (lengths)))
+      (expect eq 20 (reduce + 10 (lengths))))
+    (should "implememnt IIndexed"
+      (expect eq 3 (nth (lengths) 2))
+      (expect eq 2 (nth (lengths) 1 :not-found))
+      (expect eq :not-found (nth (lengths) 4 :not-found)))
+    (should "implement ITransientCollection"
+      (let [ls (lengths)]
+        (expect eq ls (conj! ls 5))
+        (expect eq 5 (.. ls (getItem 4) -value))
+        (expect type-eq PersistentVector (persistent! ls))
+        (expect eq [1 2 3 4 5] (vec (persistent! ls)))))
+    (should "implement ITransientAssociative"
+      (let [ls (lengths)]
+        (expect eq ls (assoc! ls 0 9))
+        (expect eq 9 (.. ls (getItem 0) -value))))
+    (should "implement ITransientVector"
+      (let [ls (lengths)]
+        (expect eq ls (pop! ls))
+        (expect eq 3 (count ls))
+        (expect eq (seq [1 2 3]) (seq ls)))))
+
+  (describe "SVGPointList"
+    :let [points #(let [node (. js/document createElementNS ns/svgns "polygon")]
+                    (. node setAttribute "points" "0 0 100 100 20 80")
+                    (. node -points))
+          point (let [pt (. op/svg-root createSVGPoint)]
+                  (set! (. pt -x) 3)
+                  (set! (. pt -y) 9)
+                  pt)]
+    (should "implement ISeqable"
+      (expect eq (seq [[0 0] [100 100] [20 80]])
+        (for [p (points)] [(. p -x) (. p -y)])))
+    (should "implement ICounted"
+      (expect eq 3 (count (points))))
+    (should "implement IReduce"
+      (expect eq [121 181] (reduce (fn [[x y] p] [(+ x (. p -x)) (+ y (. p -y))]) [1 1] (points))))
+    (should "implememnt IIndexed"
+      (expect eq 100 (. (nth (points) 1) -x))
+      (expect type-eq js/SVGPoint (nth (points) 1 :not-found))
+      (expect eq :not-found (nth (points) 3 :not-found)))
+    (should "implement ITransientCollection"
+      (let [pts (points)]
+        (expect eq pts (conj! pts point))
+        (expect eq point (. pts getItem 3))
+        (expect type-eq PersistentVector (persistent! pts))
+        (expect eq [[0 0] [100 100] [20 80] [3 9]]
+          (vec (map (fn [p] [(. p -x) (. p -y)]) (persistent! pts))))))
+    (should "implement ITransientAssociative"
+      (let [pts (points)]
+        (expect eq pts (assoc! pts 0 point))
+        (expect eq point (. pts getItem 0))))
+    (should "implement ITransientVector"
+      (let [pts (points)]
+        (expect eq pts (pop! pts))
+        (expect eq 2 (count pts)))))
+
+  (describe "point-x"
+    (should "return a point's x value"
+      (let [pt (. op/svg-root createSVGPoint)]
+        (set! (. pt -x) 9)
+        (expect eq 9 (op/point-x pt))
+        (expect eq 9 (op/point-x [9 0]))
+        (expect eq 9 (op/point-x '(9 0))))))
+
+  (describe "point-y"
+    (should "return a point's y value"
+      (let [pt (. op/svg-root createSVGPoint)]
+        (set! (. pt -y) 8)
+        (expect eq 8 (op/point-y pt))
+        (expect eq 8 (op/point-y [0 8]))
+        (expect eq 8 (op/point-y '(0 8))))))
+
+  (describe "pointwise"
+    (should "apply a function pointwise"
+      (expect eq [6 9] (op/pointwise + [1 2] [2 3] [3 4]))))
+
+  (describe "distance"
+    (should "calculate the distance between two points"
+      (expect eq 5 (op/distance [0 3] [4 0]))
+      (expect eq 13 (op/distance [0 5] [12 0]))
+      (expect eq 17 (op/distance [0 8] [15 0]))
+      (expect eq 25 (op/distance [7 0] [0 24]))))
+
+  (describe "rect-points"
+    (should "return a vector of a rect's corner points in clockwise order"
+      (expect eq [[3 8] [14 8] [14 27] [3 27]]
+        (op/rect-points [3 8 11 19]))))
+
+  (describe "rect-center"
+    (should "return center point of rect"
+      (expect eq [8.5 17.5] (op/rect-center [3 8 11 19]))))
 
   (describe "elem-mx"
     (should "return an SVG element's transform matrix"
@@ -353,6 +549,14 @@
         (let [[a b c d e f] mx]
           (expect eq [1 2 3 4 5 6] [a b c d e f]))
         (let [{:keys [a b c d e f]} mx]
-          (expect eq [1 2 3 4 5 6] [a b c d e f]))))))
+          (expect eq [1 2 3 4 5 6] [a b c d e f])))))
+
+  (describe "SVGPathSeg"
+    (should "destructure"
+      (let [seg (. op/path-elem createSVGPathSegArcAbs 1 2 3 4 5 false true)]
+        (let [[k x y r1 r2 angle largeArcFlag sweepFlag] seg]
+          (expect eq [:A 1 2 3 4 5 false true] [k x y r1 r2 angle largeArcFlag sweepFlag]))
+        (let [{:keys [type x y r1 r2 angle largeArcFlag sweepFlag]} seg]
+          (expect eq [:A 1 2 3 4 5 false true] [type x y r1 r2 angle largeArcFlag sweepFlag]))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

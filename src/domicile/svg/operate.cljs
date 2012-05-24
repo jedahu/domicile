@@ -2,11 +2,126 @@
   (:require
     [domicile.core :as dom]
     [domicile.ns :as ns]
-    [domicile.svg :as svg])
+    [domicile.svg :as svg]
+    [clojure.string :as str])
   (:use
-    [domicile.create :only [get-document]]))
+    [domicile.create :only [get-document]])
+  (:use-macros
+    [domicile.macros :only [japply]]
+    [domicile.svg.list-macro :only [extend-svg-list]]))
 
 (def svg-root (. js/document createElementNS ns/svgns "svg"))
+
+(def path-elem (. js/document createElementNS ns/svgns "path"))
+
+(defn length
+  ([]
+   (. svg-root createSVGLength))
+  ([n]
+   (if (instance? js/SVGLength n)
+     n
+     (let [len (. svg-root createSVGLength)]
+       (set! (. len -value) n)
+       len))))
+
+(defn number
+  ([]
+   (. svg-root createSVGNumber))
+  ([n]
+   (if (instance? js/SVGNumber n)
+     n
+     (let [len (. svg-root createSVGNumber)]
+       (set! (. len -value) n)
+       len))))
+
+(defn point
+  ([]
+   (. svg-root createSVGPoint))
+  ([x y]
+   (let [pt (. svg-root createSVGPoint)]
+     (set! (. pt -x) x)
+     (set! (. pt -y) y)
+     pt))
+  ([xy]
+   (if (instance? js/SVGPoint xy)
+     xy
+     (apply point xy))))
+
+(defn path-seg
+  [type|seg & args]
+  (cond
+    (or (keyword? type|seg)
+        (string? type|seg))
+    (condp = (keyword type|seg)
+      :z (. path-elem createSVGPathSegClosePath)
+      :M (japply path-elem createSVGPathSegMovetoAbs args)
+      :m (japply path-elem createSVGPathSegMovetoRel args)
+      :L (japply path-elem createSVGPathSegLinetoAbs args)
+      :l (japply path-elem createSVGPathSegLinetoRel args)
+      :C (japply path-elem createSVGPathSegCurvetoCubicAbs args)
+      :c (japply path-elem createSVGPathSegCurvetoCubicRel args)
+      :Q (japply path-elem createSVGPathSegCurvetoQuadraticAbs args)
+      :q (japply path-elem createSVGPathSegCurvetoQuadraticRel args)
+      :A (japply path-elem createSVGPathSegArcAbs args)
+      :a (japply path-elem createSVGPathSegArcRel args)
+      :H (japply path-elem createSVGPathSegLinetoHorizontalAbs args)
+      :h (japply path-elem createSVGPathSegLinetoHorizontalRel args)
+      :V (japply path-elem createSVGPathSegLinetoVerticalAbs args)
+      :v (japply path-elem createSVGPathSegLinetoVerticalRel args)
+      :S (japply path-elem createSVGPathSegCurvetoCubicSmoothAbs args)
+      :s (japply path-elem createSVGPathSegCurvetoCubicSmoothRel args)
+      :T (japply path-elem createSVGPathSegCurvetoQuadraticSmoothAbs args)
+      :t (japply path-elem createSVGPathSegCurvetoQuadraticSmoothRel args)
+      (throw (js/Error. (str "Unknown SVGPathSeg type: " type|seg))))
+
+    (instance? js/SVGPathSeg type|seg) type|seg
+    :else (apply path-seg type|seg)))
+
+(defn ^:private vec<-path-seg
+  [seg]
+  (let [type (. seg -pathSegTypeAsLetter)
+        k (keyword type)]
+    (condp #(some %2 %1) #{(. type toLowerCase)}
+      "mlt" [k (. seg -x ) (. seg -y)]
+      "z" [k]
+      "h" [k (. seg -x)]
+      "v" [k (. seg -y)]
+      "c" [k (. seg -x) (. seg -y) (. seg -x1) (. seg -y1) (. seg -x2) (. seg -y2)]
+      "s" [k (. seg -x) (. seg -y) (. seg -x2) (. seg -y2)]
+      "q" [k (. seg -x) (. seg -y) (. seg -x1) (. seg -y1)]
+      "a" [k (. seg -x) (. seg -y) (. seg -r1) (. seg -r2) (. seg -angle)
+           (. seg -largeArcFlag) (. seg -sweepFlag)]
+      (throw (js/Error. (str "Unknown SVGPathSeg type: " type))))))
+
+(defn str<-path-seg
+  [seg]
+  (let [seg (path-seg seg)
+        type (. seg -pathSegTypeAsLetter)]
+    (str/join
+      " "
+      (condp #(some %2 %1) #{(. type toLowerCase)}
+        "mlt" [type (. seg -x) (. seg -y)]
+        "z" [type]
+        "h" [type (. seg -x)]
+        "v" [type (. seg -y)]
+        "c" [type (. seg -x1) (. seg -y1) (. seg -x2) (. seg -y2) (. seg -x) (. seg y)]
+        "s" [type (. seg -x2) (. seg -y2) (. seg -x) (. seg -y)]
+        "q" [type (. seg -x1) (. seg -y1) (. seg -x) (. seg -y)]
+        "a" [type (. seg -r1) (. seg -r2) (. seg -angle)
+             (. seg -largeArcFlag) (. seg -sweepFlag) (. seg -x) (. seg -y)]
+        (throw (js/Error. (str "Unknown SVGPathSeg type: " type)))))))
+
+(defn ^:private path-seg-count
+  [seg]
+  (let [type (. seg -pathSegTypeAsLetter)]
+    (condp #(some %2 %1) #{(. type toLowerCase)}
+      "mlt" 3
+      "z" 1
+      "hv" 2
+      "c" 7
+      "sq" 5
+      "a" 8
+      (throw (js/Error. (str "Unknown SVGPathSeg type: " type))))))
 
 (extend-type js/SVGPoint
   ISeqable
@@ -146,38 +261,29 @@
          (throw (js/Error. (str "No such key for SVGMatrix: " key)))))))
 
 
-(defn length
-  ([]
-   (. svg-root createSVGLength))
-  ([n]
-   (if (instance? js/SVGLength n)
-     n
-     (let [len (. svg-root createSVGLength)]
-       (set! (. len -value) n)
-       len))))
+(extend-type js/SVGPathSeg
+  ISeqable
+  (-seq [seg] (seq (vec<-path-seg seg)))
 
-(defn number
-  ([]
-   (. svg-root createSVGNumber))
-  ([n]
-   (if (instance? js/SVGNumber n)
-     n
-     (let [len (. svg-root createSVGNumber)]
-       (set! (. len -value) n)
-       len))))
+  ICounted
+  (-count [seg] (path-seg-count seg))
 
-(defn point
-  ([]
-   (. svg-root createSVGPoint))
-  ([x y]
-   (let [pt (. svg-root createSVGPoint)]
-     (set! (. pt -x) x)
-     (set! (. pt -y) y)
-     pt))
-  ([xy]
-   (if (instance? js/SVGPoint xy)
-     xy
-     (apply point xy))))
+  ILookup
+  (-lookup
+    ([seg key]
+     (if (= :type key)
+       (keyword (. seg -pathSegTypeAsLetter))
+       (aget seg (name key))))
+    ([pt key not-found]
+     (or (-lookup seg key) not-found))))
+
+
+(extend-svg-list js/SVGLengthList length #(. % -value))
+(extend-svg-list js/SVGNumberList number #(. % -value))
+(extend-svg-list js/SVGPointList point identity)
+(extend-svg-list js/SVGStringList identity identity)
+(extend-svg-list js/SVGElementInstanceList identity identity)
+(extend-svg-list js/SVGPathSegList path-seg identity)
 
 (defn point-x
   [pt]

@@ -2,68 +2,6 @@
   (:require
     [domicile.core :as dom]))
 
-(deftype SvgList [list]
-  dom/Wrapper
-  (-underlying [_] list)
-
-  ISeqable
-  (-seq
-    [this]
-    (for [i (range 0 (. list -numberOfItems))]
-      (. list getItem i)))
-
-  ICounted
-  (-count
-    [this]
-    (. list -numberOfItems))
-
-  ITransientAssociative
-  (-assoc!
-    [tcoll key val]
-    (-assoc-n! tcoll key val))
-
-  ITransientCollection
-  (-conj!
-    [tcoll val]
-    (. list appendItem val)
-    tcoll)
-  (-persistent!
-    [tcoll]
-    (vec (-seq tcoll)))
-
-  ITransientVector
-  (-assoc-n!
-    [tcoll n val]
-    (. list replaceItem val n)
-    tcoll)
-  (-pop!
-    [tcoll]
-    (. list removeItem (dec (. tcoll -numberOfItems)))
-    tcoll))
-
-(extend-type SvgList
-  IIndexed
-  (-nth
-    ([this n]
-     (when (< n (. (dom/-underlying this) -numberOfItems))
-       (. (dom/-underlying this) getItem n)))
-    ([this n not-found]
-     (if (< n (. (dom/-underlying this) -numberOfItems))
-       (. (dom/-underlying this) getItem n)
-       not-found)))
-
-  IReduce
-  (-reduce
-    ([this f]
-     (ci-reduce this f))
-    ([this f start]
-     (ci-reduce this f start))))
-
-(defn svg-list
-  [list]
-  (when list (SvgList. list)))
-
-
 (deftype SvgProps [elem]
   dom/Wrapper
   (-underlying [_] elem)
@@ -117,13 +55,13 @@
          (. prop -value)
 
          (. prop -numberOfItems)
-         (svg-list prop)
+         prop
 
          (. prop -baseVal)
          (let [bv (. prop -baseVal)]
            (cond
              (. bv -value)         (. bv -value)
-             (. bv -numberOfItems) (svg-list bv)
+             (. bv -numberOfItems) bv
              :else                 bv))
 
          :else prop)))

@@ -186,43 +186,6 @@
         (. node setAttribute "class" "one two three")
         (expect type-eq dom/DomList (:classList props)))))
 
-  (describe "SvgList"
-    :let [points #(let [node (. js/document createElementNS ns/svgns "polygon")]
-                    (. node setAttribute "points" "0 0 100 100 20 80")
-                    (svg/svg-list (.. node -points)))
-          root (. js/document createElementNS ns/svgns "svg")
-          point (let [pt (. root createSVGPoint)]
-                  (set! (. pt -x) 3)
-                  (set! (. pt -y) 9)
-                  pt)]
-    (should "implement ISeqable"
-      (expect type-eq svg/SvgList (points))
-      (expect eq (seq [[0 0] [100 100] [20 80]])
-        (for [p (points)] [(. p -x) (. p -y)])))
-    (should "implement ICounted"
-      (expect eq 3 (count (points))))
-    (should "implement IReduce"
-      (expect eq [121 181] (reduce (fn [[x y] p] [(+ x (. p -x)) (+ y (. p -y))]) [1 1] (points))))
-    (should "implememnt IIndexed"
-      (expect eq 100 (. (nth (points) 1) -x))
-      (expect type-eq js/SVGPoint (nth (points) 1 :not-found))
-      (expect eq :not-found (nth (points) 3 :not-found)))
-    (should "implement ITransientCollection"
-      (let [pts (points)]
-        (expect eq pts (conj! pts point))
-        (expect eq point (. (dom/underlying pts) getItem 3))
-        (expect type-eq PersistentVector (persistent! pts))
-        (expect eq [[0 0] [100 100] [20 80] [3 9]]
-          (vec (map (fn [p] [(. p -x) (. p -y)]) (persistent! pts))))))
-    (should "implement ITransientAssociative"
-      (let [pts (points)]
-        (expect eq pts (assoc! pts 0 point))
-        (expect eq point (. (dom/underlying pts) getItem 0))))
-    (should "implement ITransientVector"
-      (let [pts (points)]
-        (expect eq pts (pop! pts))
-        (expect eq 2 (count pts)))))
-
   (describe "SvgProps"
     (should "implement ILookup"
       ;; prop -baseVal -value
@@ -242,7 +205,7 @@
       (let [node (. js/document createElementNS ns/svgns "polyline")
             props (svg/props node)]
         (. node setAttribute "points" "0 0 100 100 20 80")
-        (expect type-eq svg/SvgList (:points props))
+        (expect type-eq js/SVGPointList (:points props))
         (expect eq 3 (count (:points props)))))
     (should "implement ITransientCollection"
       (let [node (. js/document createElementNS ns/svgns "rect")
@@ -258,11 +221,6 @@
         (expect eq props (assoc! props :x 10))
         (expect eq 10 (.. node -x -baseVal -value))
         (assoc! props :x 11)
-        (expect eq 11 (.. node -x -baseVal -value))))
-    (should "wrap svg lists"
-      (let [node (. js/document createElementNS ns/svgns "polygon")
-            props (svg/props node)]
-        (. node setAttribute "points" "0 0 100 100 20 80")
-        (expect type-eq svg/SvgList (:points props))))))
+        (expect eq 11 (.. node -x -baseVal -value))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

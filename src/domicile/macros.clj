@@ -1,5 +1,12 @@
 (ns domicile.macros)
 
+(defmacro japply
+  [jobj prop & args]
+  `(let [method# (aget ~jobj ~(name prop))]
+     (. method# ~'apply ~jobj
+        (apply cljs.core/array
+               (cljs.core/list* ~@args)))))
+
 (defmacro ?call
   [jobj prop & args]
   `(when-let [method# (aget ~jobj ~(name prop))]
@@ -10,4 +17,4 @@
   `(when-let [method# (aget ~jobj ~(name prop))]
      (. method# ~'apply ~jobj
         (apply cljs.core/array
-               (apply cljs.core/list* '~args)))))
+               (cljs.core/list* ~@args)))))
