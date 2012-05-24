@@ -56,21 +56,18 @@
   (when list (DomList. list)))
 
 
-(deftype Attrs [elem]
-  Wrapper
-  (-underlying [_] elem)
-
+(extend-type js/Element
   ITransientCollection
   (-conj!
-    [tcoll o]
+    [elem o]
     (if (satisfies? IMapEntry o)
-      (-assoc! tcoll (key o) (val o))
+      (-assoc! elem (key o) (val o))
       (do
         (doseq [e o]
-          (-assoc! tcoll (key e) (val e)))
-        tcoll)))
+          (-assoc! elem (key e) (val e)))
+        elem)))
   (-persistent!
-    [tcoll]
+    [elem]
     (let [map (transient {})]
       (doseq [a (dom-list (. elem -attributes))]
         (assoc! map
@@ -80,31 +77,27 @@
 
   ITransientAssociative
   (-assoc!
-    [tcoll key val]
+    [elem key val]
     (let [[ns k] (ns/normalize-name key)]
       (. elem setAttributeNS ns k val))
-    tcoll)
+    elem)
 
   ITransientMap
   (-dissoc!
-    [tcoll key]
+    [elem key]
     (let [[ns k] (ns/normalize-name key)]
       (. elem removeAttributeNS ns k))
-    tcoll))
+    elem)
 
-(extend-type Attrs
   ILookup
   (-lookup
-    ([o k]
+    ([elem k]
      (let [[ns k] (ns/normalize-name k)
-           val (. (-underlying o) getAttributeNS ns k)]
+           val (. elem getAttributeNS ns k)]
        (if (= "" val) nil val)))
-    ([o k not-found]
-     (or (-lookup o k) not-found))))
+    ([elem k not-found]
+     (or (-lookup elem k) not-found))))
 
-(defn attrs
-  [elem]
-  (when elem (Attrs. elem)))
 
 (extend-type js/CSSStyleDeclaration
   ITransientCollection

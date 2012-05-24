@@ -1,6 +1,5 @@
 (ns domicile.create
   (:require
-    [domicile.core :as dom]
     [domicile.ns :as ns]))
 
 (def ^:dynamic *document* nil)
@@ -19,7 +18,7 @@
                    (if ns
                      (. (get-document) createElementNS ns local)
                      (. (get-document) createElement local)))]
-    (conj! (dom/attrs dom-node) attrs)
+    (conj! dom-node attrs)
     (doseq [c children]
       (. dom-node appendChild
          (if (string? c)
