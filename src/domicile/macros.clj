@@ -18,3 +18,10 @@
      (. method# ~'apply ~jobj
         (apply cljs.core/array
                (cljs.core/list* ~@args)))))
+
+(defmacro set-change!
+  [obj prop f & args]
+  (let [prop (name prop)]
+    `(let [obj# ~obj
+           val# (aget obj# ~prop)]
+       (aset obj# ~prop (apply ~f val# ~@args)))))
