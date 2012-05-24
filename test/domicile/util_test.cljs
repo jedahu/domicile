@@ -1,4 +1,4 @@
-(ns domicile.macros-test
+(ns domicile.util-test
   (:require
     [menodora.core :as mc])
   (:use
@@ -6,9 +6,9 @@
     [menodora.predicates :only [eq]])
   (:use-macros
     [menodora :only [defsuite describe should expect]]
-    [domicile.macros :only [?call ?apply japply set-change!]]))
+    [domicile.util.macros :only [?call ?apply japply set-change!]]))
 
-(defsuite macros-tests
+(defsuite util-tests
   (describe "japply"
     (should "apply method to args"
       (expect eq "ASDF" (japply "asdf" toUpperCase))

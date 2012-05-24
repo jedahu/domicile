@@ -7,7 +7,7 @@
   (:use
     [domicile.create :only [get-document]])
   (:use-macros
-    [domicile.macros :only [japply]]
+    [domicile.util.macros :only [japply]]
     [domicile.svg.list-macro :only [extend-svg-list]]))
 
 (def svg-root (. js/document createElementNS ns/svgns "svg"))

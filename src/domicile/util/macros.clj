@@ -1,4 +1,4 @@
-(ns domicile.macros)
+(ns domicile.util.macros)
 
 (defmacro japply
   [jobj prop & args]
