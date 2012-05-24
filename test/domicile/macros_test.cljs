@@ -19,7 +19,16 @@
         (expect eq "asdf123" (japply "asdf" concat 1 rest))))
     (should "throw error when last arg is not a sequence"
       (expect eq :error (try (japply "asdf" concat 2 1)
-                          (catch js/Object e :error)))))
+                          (catch js/Object e :error))))
+    (should "evaluate args only once"
+      (let [obj (atom 0)
+            args (atom 0)]
+        (expect eq "abc123"
+          (japply (do (swap! obj inc) "abc")
+                  concat
+                  (do (swap! args inc) [1 2 3])))
+        (expect eq 1 @obj)
+        (expect eq 1 @args))))
 
   (describe "?call"
     (should "do nothing when method not present"
@@ -45,11 +54,18 @@
                           (catch js/Object e :error)))))
 
   (describe "set-change!"
-    (should "operate like update-in but return new value"
+    (should "operate like swap!"
       (expect eq 3 (set-change! (js-obj "number" 2) number inc))
       (let [jobj (js-obj "number" 2)]
         (expect eq 9 (set-change! jobj number + 3 4))
-        (expect eq 9 (. jobj -number)))))
+        (expect eq 9 (. jobj -number))))
+    (should "evaluate args only once"
+      (let [obj (atom 0)]
+        (expect eq 3
+          (set-change! (do (swap! obj inc) (js-obj "number" 2))
+                       number
+                       inc))
+        (expect eq 1 @obj))))
 
   (describe "assoc-change!"
     (should "operate like update-in (return tcoll)"
