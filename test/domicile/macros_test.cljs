@@ -2,7 +2,7 @@
   (:require
     [menodora.core :as mc])
   (:use
-    [domicile.util :only [assoc-change!]]
+    [domicile.util :only [update!]]
     [menodora.predicates :only [eq]])
   (:use-macros
     [menodora :only [defsuite describe should expect]]
@@ -67,12 +67,12 @@
                        inc))
         (expect eq 1 @obj))))
 
-  (describe "assoc-change!"
-    (should "operate like update-in (return tcoll)"
+  (describe "update!"
+    (should "operate like update-in"
       (let [map (transient {:number 1})]
-        (expect eq map (assoc-change! map :number inc))
+        (expect eq map (update! map :number inc))
         (expect eq 2 (:number map))
-        (expect eq map (assoc-change! map :number + 3 4))
+        (expect eq map (update! map :number + 3 4))
         (expect eq 9 (:number map))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:
