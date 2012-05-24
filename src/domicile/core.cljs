@@ -111,27 +111,27 @@
         tcoll)))
   (-persistent!
     [tcoll]
-    (into {} (for [k (js-keys tcoll)
-                   :let [v (aget tcoll k)]
+    (into {} (for [k (dom-list tcoll)
+                   :let [v (. tcoll getPropertyValue k)]
                    :when (and v (not= "" v))]
                [(keyword k) v])))
 
   ITransientAssociative
   (-assoc!
     [tcoll key val]
-    (aset tcoll (name key) val)
+    (. tcoll setProperty (name key) val nil)
     tcoll)
 
   ITransientMap
   (-dissoc!
     [tcoll key]
-    (aset tcoll (name key) "")
+    (. tcoll removeProperty (name key))
     tcoll)
 
   ILookup
   (-lookup
     ([o k]
-     (let [val (aget o (name k))]
+     (let [val (. o getPropertyValue (name k))]
        (if (= "" val) nil val)))
     ([o k not-found]
      (or (-lookup o k) not-found))))

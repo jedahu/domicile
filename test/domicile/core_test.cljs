@@ -96,11 +96,11 @@
             css (. node -style)]
         (expect eq css (conj! css [:color "red"]))
         (expect eq "red" (. css -color))
-        (expect eq css (conj! css {:color "blue" :background "yellow"}))
+        (expect eq css (conj! css {:color "blue" :background-color "yellow"}))
         (expect eq "blue" (. css -color))
         (expect eq "yellow" (. css -background))
 
-        (expect eq #{} (difference (set {:color "blue" :background "yellow"})
+        (expect eq #{} (difference (set {:color "blue" :background-color "yellow"})
                                    (set (persistent! css))))))
     (should "implement ITransientAssociative"
       (let [node (. js/document createElement "div")
@@ -124,7 +124,8 @@
             css (. js/window getComputedStyle node)]
         (set! (.. node -style -color) "red")
         (expect eq "rgb(255, 0, 0)" (:color css))
-        (expect eq "0px none rgb(255, 0, 0)" (:border css))
+        (expect truthy (or (= "0px none rgb(255, 0, 0)" (:border css))
+                           (not (:border css))))
         (expect eq "rgb(255, 0, 0)" (get css :color :not-found))))
     (should "implement ITransientCollection"
       (let [node (. js/document -body)
