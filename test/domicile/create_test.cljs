@@ -1,6 +1,6 @@
 (ns domicile.create-test
   (:require
-    [domicile.core :as dom]
+    [domicile.dom :as dom]
     [domicile.ns :as ns]
     [domicile.create :as create]
     [menodora.core :as mc])
@@ -44,7 +44,7 @@
                                        (create/elem "script" {} "alert('boo!')")]
                                       (create/elem "h1" {} "Hello World")
                                       (create/elem "p" {:class "intro"} "blah"))
-            scripts (dom/dom-list (. doc getElementsByTagName "script"))
+            scripts (. doc getElementsByTagName "script")
             h1 (.. doc (getElementsByTagName "h1") (item 0))
             p (.. doc (getElementsByTagName "p") (item 0))]
         (expect type-eq js/HTMLDocument doc)

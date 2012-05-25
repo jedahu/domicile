@@ -1,30 +1,30 @@
-(ns domicile.operate-test
+(ns domicile.dom-test
   (:require
-    [domicile.operate :as op]
+    [domicile.dom :as dom]
     [menodora.core :as mc])
   (:use
     [menodora.predicates :only [eq type-eq truthy]])
   (:use-macros
     [menodora :only [defsuite describe should expect]]))
 
-(defsuite operate-tests
+(defsuite dom-tests
   (describe "classes"
     :let [elem (fn [classes]
                  (let [e (. js/document createElement "div")]
                    (. e setAttribute "class" classes)
                    e))]
     (should "return a set"
-      (expect eq #{"a"} (op/classes (elem "a")))
-      (expect eq #{"a" "b"} (op/classes (elem "a b")))
-      (expect eq #{"a" "b"} (op/classes (elem "a b a"))))
+      (expect eq #{"a"} (dom/classes (elem "a")))
+      (expect eq #{"a" "b"} (dom/classes (elem "a b")))
+      (expect eq #{"a" "b"} (dom/classes (elem "a b a"))))
     (should "ignore whitespace"
-      (expect eq #{"a"} (op/classes (elem " a ")))
-      (expect eq #{"a" "b"} (op/classes (elem " a   b "))))
+      (expect eq #{"a"} (dom/classes (elem " a ")))
+      (expect eq #{"a" "b"} (dom/classes (elem " a   b "))))
     (should "return the empty set if no classes"
-      (expect eq #{} (op/classes (. js/document createElement "div")))
+      (expect eq #{} (dom/classes (. js/document createElement "div")))
       (let [elem (. js/document createElement "div")]
         (. elem setAttribute "class" "")
-        (expect eq #{} (op/classes elem)))))
+        (expect eq #{} (dom/classes elem)))))
 
   (describe "ancestors"
     :let [a (. js/document createElement "div")
@@ -36,8 +36,8 @@
               (. b appendChild c)
               (. c appendChild d))
     (should "return correct sequence"
-      (expect eq [d c b a] (vec (op/ancestors d)))
-      (expect eq [a] (vec (op/ancestors a)))))
+      (expect eq [d c b a] (vec (dom/ancestors d)))
+      (expect eq [a] (vec (dom/ancestors a)))))
 
   (describe "ancestors-to"
     :let [a (. js/document createElement "div")
@@ -49,16 +49,16 @@
               (. b appendChild c)
               (. c appendChild d))
     (should "return correct sequence"
-      (expect eq [d c b] (vec (op/ancestors-to d a))))
+      (expect eq [d c b] (vec (dom/ancestors-to d a))))
     (should "return nil if ancestor is not an ancestor"
-      (expect eq nil (op/ancestors-to b d)))
+      (expect eq nil (dom/ancestors-to b d)))
     (should "return empty sequence if node is ancestor"
-      (expect eq () (op/ancestors-to d d))))
+      (expect eq () (dom/ancestors-to d d))))
 
   (describe "viewport-size"
     (should "return a pair of numbers"
-      (expect truthy (vector? (op/viewport-size)))
-      (expect truthy (number? (first (op/viewport-size))))
-      (expect truthy (number? (second (op/viewport-size)))))))
+      (expect truthy (vector? (dom/viewport-size)))
+      (expect truthy (number? (first (dom/viewport-size))))
+      (expect truthy (number? (second (dom/viewport-size)))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

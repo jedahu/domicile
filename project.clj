@@ -12,8 +12,9 @@
   :plugins [[lein-cst "0.3.1"]]
 
   :cst
-  {:suites [domicile.core-test/core-tests
+  {:suites [domicile.dom-test/dom-tests
+            domicile.extended-types-test/extended-types-tests
             domicile.create-test/create-tests
             domicile.util-test/util-tests
-            domicile.operate-test/operate-tests
-            domicile.svg.operate-test/operate-tests]})
+            domicile.svg-test/svg-tests
+            domicile.svg.extended-types-test/svg-extended-types-tests]})

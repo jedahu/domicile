@@ -1,7 +1,6 @@
-(ns domicile.core-test
+(ns domicile.extended-types-test
   (:require
-    [domicile.core :as dom]
-    [domicile.svg :as svg]
+    [domicile.dom :as dom]
     [domicile.ns :as ns]
     [menodora.core :as mc])
   (:use
@@ -10,11 +9,11 @@
   (:use-macros
     [menodora :only [defsuite describe should expect]]))
 
-(defsuite core-tests
-  (describe "DomList"
+(defsuite extended-types-tests
+  (describe "DOM lists"
     :let [classes (let [node (. js/document createElement "div")]
                     (. node setAttribute "class" "one two three")
-                    (dom/dom-list (. node -classList)))]
+                    (. node -classList))]
     (should "implement ISeqable"
       (expect eq (seq ["one" "two" "three"]) (seq classes)))
     (should "implement ICounted"
@@ -143,81 +142,6 @@
       (let [node (. js/document createElement "div")
             css (. js/window getComputedStyle node)]
         (expect eq :error (try (dissoc! css :color)
-                            (catch js/Object e :error))))))
-
-  (describe "Props"
-    (should "implement ILookup"
-      (let [node (. js/document createElement "div")
-            props (dom/props node)]
-        (set! (. node -foo) "abc")
-        (expect eq "abc" (:foo props))
-        (expect eq nil (:bar props))
-        (expect eq "abc" (get props :foo :not-found))
-        (expect eq :not-found (get props :bar :not-found))))
-    (should "implement ITransientCollection"
-      (let [node (. js/document createElement "div")
-            props (dom/props node)]
-        (expect eq props (conj! props [:innerText "hello"]))
-        (expect eq "hello" (. node -innerText))
-        (expect eq props (conj! props {:innerText "world" :title "greeting"}))
-        (expect eq "world" (. node -innerText))
-        (expect eq "greeting" (. node -title))))
-    (should "implement ITransientAssociative"
-      (let [node (. js/document createElement "div")
-            props (dom/props node)]
-        (expect eq props (assoc! props :foo "abc"))
-        (expect eq "abc" (. node -foo))
-        (assoc! props :foo "def")
-        (expect eq "def" (. node -foo))))
-    (should "implement ITransientMap"
-      (let [node (. js/document createElement "div")
-            props (dom/props node)]
-        (set! (. node -foo) "abc")
-        (expect eq props (dissoc! props :foo))
-        (expect eq nil (. node -foo))
-        (dissoc! props :foo)
-        (expect eq nil (. node -foo))))
-    (should "wrap dom lists"
-      (let [node (. js/document createElement "div")
-            props (dom/props node)]
-        (. node setAttribute "class" "one two three")
-        (expect type-eq dom/DomList (:classList props)))))
-
-  (describe "SvgProps"
-    (should "implement ILookup"
-      ;; prop -baseVal -value
-      (let [node (. js/document createElementNS ns/svgns "rect")
-            props (svg/props node)]
-        (set! (.. node -x -baseVal -value) 10)
-        (expect eq 10 (:x props))
-        (expect eq nil (:bar props))
-        (expect eq 10 (get props :x :not-found))
-        (expect eq :not-found (get props :bar :not-found)))
-      ;; prop -baseVal
-      (let [node (. js/document createElementNS ns/svgns "path")
-            props (svg/props node)]
-        (. node setAttribute "pathLength" "3")
-        (expect eq 3 (:pathLength props)))
-      ;; prop -baseVal (list)
-      (let [node (. js/document createElementNS ns/svgns "polyline")
-            props (svg/props node)]
-        (. node setAttribute "points" "0 0 100 100 20 80")
-        (expect type-eq js/SVGPointList (:points props))
-        (expect eq 3 (count (:points props)))))
-    (should "implement ITransientCollection"
-      (let [node (. js/document createElementNS ns/svgns "rect")
-            props (svg/props node)]
-        (expect eq props (conj! props [:x 10]))
-        (expect eq 10 (.. node -x -baseVal -value))
-        (expect eq props (conj! props {:x 11 :y 22}))
-        (expect eq 11 (.. node -x -baseVal -value))
-        (expect eq 22 (.. node -y -baseVal -value))))
-    (should "implement ITransientAssociative"
-      (let [node (. js/document createElementNS ns/svgns "rect")
-            props (svg/props node)]
-        (expect eq props (assoc! props :x 10))
-        (expect eq 10 (.. node -x -baseVal -value))
-        (assoc! props :x 11)
-        (expect eq 11 (.. node -x -baseVal -value))))))
+                            (catch js/Object e :error)))))))
 
 ;;. vim: set lispwords+=defsuite,describe,should,expect:

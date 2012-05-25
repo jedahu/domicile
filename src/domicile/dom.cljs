@@ -1,8 +1,13 @@
-(ns domicile.operate
+(ns domicile.dom
   (:refer-clojure :exclude [ancestors])
   (:require
-    [domicile.core :as dom]
-    [goog.dom.ViewportSizeMonitor :as viewport]))
+    [domicile.ns :as ns]
+    [domicile.extended-types :as _et]
+    [clojure.string :as str]
+    [goog :as goog]
+    [goog.dom.ViewportSizeMonitor :as viewport])
+  (:use
+    [clojure.set :only [map-invert]]))
 
 (defn classes
   [elem]

@@ -1,6 +1,7 @@
 (ns domicile.create
   (:require
-    [domicile.ns :as ns]))
+    [domicile.ns :as ns]
+    [domicile.extended-types :as _et]))
 
 (def ^:dynamic *document* nil)
 
