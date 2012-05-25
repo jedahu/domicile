@@ -17,4 +17,5 @@
             domicile.create-test/create-tests
             domicile.util-test/util-tests
             domicile.svg-test/svg-tests
-            domicile.svg.extended-types-test/svg-extended-types-tests]})
+            domicile.svg.extended-types-test/svg-extended-types-tests
+            domicile.css-test/css-tests]})

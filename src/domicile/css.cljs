@@ -21,10 +21,19 @@
    (normalize-selector s 2)))
 
 (defn rules
-  "Convert the vectors `rs` to CSS rules. See `css` for details."
-  [& rs]
-  (join ";" (for [[k v] (partition 2 rs)]
+  "Convert args to CSS rules. See `css` for details."
+  [& args]
+  (join ";" (for [[k v] (partition 2 args)]
               (str (name k) ":" v))))
+
+(defn- css1
+  [[selector & rule-list :as rules*]]
+  (str
+    (join "," (map #(join " " %)
+                   (normalize-selector selector)))
+    "{"
+    (apply rules rule-list)
+    "}"))
 
 (defn css
   "Convert the input to CSS. Input is one or more of the following vectors,
@@ -47,12 +56,5 @@
 
   [:.entity [:.name :> :.nick]] => [[\".entity\"] [\".name\" \">\" \".nick\"]]
       => \".entity, .name > .nick\"."
-  ([[selector & rule-list]]
-   (str
-     (join "," (map #(join " " %)
-                    (normalize-selector selector)))
-     "{"
-     (apply rules rule-list)
-     "}"))
-  ([& decls]
-   (join (map css decls))))
+  [& decls]
+  (join "" (map css1 decls)))
