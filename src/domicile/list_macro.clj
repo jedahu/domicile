@@ -24,9 +24,17 @@
      cljs.core/IIndexed
      (~'-nth
        ([list# n#]
-        (when (< n# (. list# -length))
-          (. list# ~'item n#)))
+        (if (< n# (. list# -length))
+          (. list# ~'item n#)
+          (throw (js/Error. (str "Index out of bounds: " n#)))))
        ([list# n# not-found#]
         (if (< n# (. list# -length))
           (. list# ~'item n#)
-          not-found#)))))
+          not-found#)))
+
+     cljs.core/ILookup
+     (~'-lookup
+       ([list# key#]
+        (~'-nth list# key#))
+       ([list# key# not-found#]
+        (~'-nth list# key# not-found#)))))

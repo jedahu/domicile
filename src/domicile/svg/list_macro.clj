@@ -41,12 +41,20 @@
      cljs.core/IIndexed
      (~'-nth
        ([list# n#]
-        (when (< n# (. list# -numberOfItems))
-          (~get-val (. list# ~'getItem n#))))
+        (if (< n# (. list# -numberOfItems))
+          (~get-val (. list# ~'getItem n#))
+          (throw (js/Error. (str "Index out of bounds: " n#)))))
        ([list# n# not-found#]
         (if (< n# (. list# -numberOfItems))
           (~get-val (. list# ~'getItem n#))
           not-found#)))
+
+     cljs.core/ILookup
+     (~'-lookup
+       ([list# key#]
+        (~'-nth list# key#))
+       ([list# key# not-found#]
+        (~'-nth list# key# not-found#)))
 
      cljs.core/IReduce
      (~'-reduce
