@@ -1,4 +1,4 @@
-(defproject domicile "0.5.0"
+(defproject domicile "0.6.0-SNAPSHOT"
   :description "A clojurescript DOM library"
   :url "https://github.com/jedahu/domicile"
   :license {:name "ISC"
