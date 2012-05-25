@@ -17,6 +17,18 @@
             "")
       #{})))
 
+(defn add-classes!
+  [elem class & cs]
+  (. elem setAttribute
+     "class"
+     (str/join " " (apply conj (classes elem) class cs))))
+
+(defn del-classes!
+  [elem class & cs]
+  (. elem setAttribute
+     "class"
+     (str/join " " (apply disj (classes elem) class cs))))
+
 (defn remove-node!
   [node]
   (when-let [parent ( . node -parentNode)]
