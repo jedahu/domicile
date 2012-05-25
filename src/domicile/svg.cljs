@@ -289,10 +289,10 @@
             y1 (.. elem -y -baseVal)]
         (if (seq x1)
           (update! x1 0 - dx)
-          (assoc! x1 0 (- dx)))
+          (conj! x1 (- dx)))
         (if (seq y1)
           (update! y1 0 - dy)
-          (assoc! y1 0 (- dy)))
+          (conj! y1 (- dy)))
         (set-elem-mx!
           elem (. (elem-mx elem)
                   translate dx dy))))))
