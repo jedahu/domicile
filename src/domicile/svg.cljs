@@ -6,6 +6,7 @@
     [domicile.svg.extended-types :as _et]
     [clojure.string :as str])
   (:use
+    [domicile.util :only [update!]]
     [domicile.create :only [get-document]])
   (:use-macros
     [domicile.util.macros :only [japply]]))
@@ -282,17 +283,19 @@
       (elem-mx elem)
       (let [w2 (/ w 2)
             h2 (/ h 2)
-            dx (- x w2)
-            dy (- y h2)
-            x1 (.. elem -x -baseVal (getItem 0))
-            y1 (.. elem -y -baseVal (getItem 0))]
-        (set! (. x1 -value) (- (. x1 -value) (+ x w2)))
-        (set! (. y1 -value) (- (. y1 -value) (+ y h2)))
-        ;(set! (. x1 -value) (- (. x1 -value) cx))
-        ;(set! (. y1 -value) (- (. y1 -value) cy))
+            dx (+ x w2)
+            dy (+ y h2)
+            x1 (.. elem -x -baseVal)
+            y1 (.. elem -y -baseVal)]
+        (if (seq x1)
+          (update! x1 0 - dx)
+          (assoc! x1 0 (- dx)))
+        (if (seq y1)
+          (update! y1 0 - dy)
+          (assoc! y1 0 (- dy)))
         (set-elem-mx!
           elem (. (elem-mx elem)
-                  translate (+ x w2) (+ y h2)))))))
+                  translate dx dy))))))
 
 (extend-protocol CenterOrigin
 
