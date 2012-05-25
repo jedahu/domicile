@@ -43,3 +43,17 @@
   []
   (let [size (. (viewport/getInstanceForWindow) getSize)]
     [(. size -width) (. size -height)]))
+
+(defn show-elem!
+  [elem]
+  (.. elem -style (removeProperty "visibility")))
+
+(defn hide-elem!
+  [elem]
+  (.. elem -style (setProperty "visibility" "hidden")))
+
+(defn computed-dimensions
+  [elem]
+  (let [cs (. js/window getComputedStyle elem)]
+    [(js/parseInt (. cs getPropertyValue "width"))
+     (js/parseInt (. cs getPropertyValue "height"))]))

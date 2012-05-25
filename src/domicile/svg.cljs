@@ -365,3 +365,7 @@
          (> (+ x2 w2) x1)
          (< y2 (+ y1 h1))
          (> (+ y2 h2) y1))))
+
+(defn evt-client-point
+  [evt]
+  (point (. evt -clientX) (. evt -clientY)))
