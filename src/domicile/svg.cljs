@@ -112,7 +112,7 @@
         "z" [type]
         "h" [type (. seg -x)]
         "v" [type (. seg -y)]
-        "c" [type (. seg -x1) (. seg -y1) (. seg -x2) (. seg -y2) (. seg -x) (. seg y)]
+        "c" [type (. seg -x1) (. seg -y1) (. seg -x2) (. seg -y2) (. seg -x) (. seg -y)]
         "s" [type (. seg -x2) (. seg -y2) (. seg -x) (. seg -y)]
         "q" [type (. seg -x1) (. seg -y1) (. seg -x) (. seg -y)]
         "a" [type (. seg -r1) (. seg -r2) (. seg -angle)
