@@ -241,14 +241,18 @@
     mx))
 
 (defn transform-point
-  [pt mx]
-  (. (point pt) matrixTransform mx))
+  ([pt mx]
+   (. (point pt) matrixTransform mx))
+  ([pt from to]
+   (transform-point pt (. from getTransformToElement to))))
 
 (defn transform-rect
-  [rec mx]
-  (vec
-    (for [pt (rect-points rec)]
-      (transform-point pt mx))))
+  ([rec mx]
+   (vec
+     (for [pt (rect-points rec)]
+       (transform-point pt mx))))
+  ([rec from to]
+   (transform-rect rec (. from getTransformToElement to))))
 
 (defprotocol CenterOrigin
   (-center-origin! [node xy]))
