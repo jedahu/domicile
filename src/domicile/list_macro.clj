@@ -6,8 +6,9 @@
      cljs.core/ISeqable
      (~'-seq
        [list#]
-       (for [i# (range 0 (. list# -length))]
-         (. list# ~'item i#)))
+       (seq
+         (for [i# (range 0 (. list# -length))]
+           (. list# ~'item i#))))
 
      cljs.core/ICounted
      (~'-count
