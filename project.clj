@@ -18,4 +18,5 @@
             domicile.util-test/util-tests
             domicile.svg-test/svg-tests
             domicile.svg.extended-types-test/svg-extended-types-tests
-            domicile.css-test/css-tests]})
+            domicile.css-test/css-tests]
+   :runner :console-phantom})
