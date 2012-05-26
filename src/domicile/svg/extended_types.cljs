@@ -170,6 +170,22 @@
          (throw (js/Error. (str "No such key for SVGMatrix: " key)))))))
 
 
+(extend-type js/SVGTransform
+  ISeqable
+  (-seq
+    [tr]
+    (let [[a b c d e f :as mx] (. tr -matrix)
+          type (. tr -type)]
+      (condp = type
+        1 (list* :matrix (seq mx))
+        2 (list :translate e f)
+        3 (list :scale a d)
+        4 (list :rotate (. tr -angle) e f)
+        5 (list :skew-x (. tr -angle))
+        6 (list :skew-y (. tr -angle))
+        (throw (js/Error. (str "Unknown SVGTransform type: " type)))))))
+
+
 (extend-type js/SVGPathSeg
   ISeqable
   (-seq [seg] (seq (vec<-path-seg seg)))
@@ -193,3 +209,4 @@
 (extend-svg-list js/SVGStringList identity identity)
 (extend-svg-list js/SVGElementInstanceList identity identity)
 (extend-svg-list js/SVGPathSegList cdef/path-seg identity)
+(extend-svg-list js/SVGTransformList identity identity)

@@ -45,6 +45,19 @@
         (let [{:keys [a b c d e f]} mx]
           (expect eq [1 2 3 4 5 6] [a b c d e f])))))
 
+  (describe "SVGTransform"
+    (should "destructure"
+      (let [tr (. svg/svg-root createSVGTransform)]
+        (. tr setTranslate 3 4)
+        (let [[type x y] tr]
+          (expect eq [:translate 3 4] [type x y]))
+        (. tr setRotate 90 3 8)
+        (let [[type a x y] tr]
+          (expect eq [:rotate 90 11 5] [type a x y]))
+        (. tr setScale 3 4)
+        (let [[type x y] tr]
+          (expect eq [:scale 3 4] [type x y])))))
+
   (describe "SVGPathSeg"
     (should "destructure"
       (let [seg (. svg/path-elem createSVGPathSegArcAbs 1 2 3 4 5 false true)]
