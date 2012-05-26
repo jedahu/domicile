@@ -183,8 +183,10 @@
 (defn elem-mx
   [elem]
   (when-not (. elem getAttribute "transform")
-    (. elem setAttribute "transform" "scale(1)"))
-  (.. elem -transform -baseVal (consolidate) -matrix))
+    (. elem setAttribute "transform" "translate(0 0) rotate(0) scale(1)"))
+  (reduce #(. %1 multiply %2)
+          (map #(. % -matrix)
+               (.. elem -transform -baseVal))))
 
 (defn mx-components
   [elem|mx]
