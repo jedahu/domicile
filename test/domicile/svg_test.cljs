@@ -17,6 +17,7 @@
         (set! (.. node -x -baseVal -value) 10)
         (expect eq 10 (:x props))
         (expect eq nil (:bar props))
+        (expect eq nil (get props [:not :string :or :keyword]))
         (expect eq 10 (get props :x :not-found))
         (expect eq :not-found (get props :bar :not-found)))
       ;; prop -baseVal

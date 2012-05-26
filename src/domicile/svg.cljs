@@ -81,7 +81,10 @@
   ILookup
   (-lookup
     ([o k]
-     (when-let [prop (aget (-underlying o) (name k))]
+     (when-let [prop (aget (-underlying o)
+                           (if (keyword? k)
+                             (name k)
+                             k))]
        (cond
          (. prop -value)
          (. prop -value)
