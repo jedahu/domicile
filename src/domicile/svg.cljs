@@ -23,6 +23,10 @@
 
 (def path-seg cdef/path-seg)
 
+(def matrix cdef/matrix)
+
+(def transform cdef/transform)
+
 (defprotocol Wrapper
   (-underlying [wrapper]))
 
@@ -172,23 +176,6 @@
   [rec]
   (let [[x y w h] rec]
     [(+ x (/ w 2)) (+ y (/ h 2))]))
-
-(defn matrix
-  ([]
-   (. svg-root createSVGMatrix))
-  ([a b c d e f]
-   (let [mx (. svg-root createSVGMatrix)]
-     (set! (. mx -a) a)
-     (set! (. mx -b) b)
-     (set! (. mx -c) c)
-     (set! (. mx -d) d)
-     (set! (. mx -e) e)
-     (set! (. mx -f) f)
-     mx))
-  ([abcdef]
-   (if (instance? js/SVGMatrix abcdef)
-     abcdef
-     (apply matrix abcdef))))
 
 (defn elem-mx
   [elem]

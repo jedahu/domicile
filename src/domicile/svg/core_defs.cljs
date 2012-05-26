@@ -70,3 +70,38 @@
 
     (instance? js/SVGPathSeg type|seg) type|seg
     :else (apply path-seg type|seg)))
+
+(defn matrix
+  ([]
+   (. svg-root createSVGMatrix))
+  ([a b c d e f]
+   (let [mx (. svg-root createSVGMatrix)]
+     (set! (. mx -a) a)
+     (set! (. mx -b) b)
+     (set! (. mx -c) c)
+     (set! (. mx -d) d)
+     (set! (. mx -e) e)
+     (set! (. mx -f) f)
+     mx))
+  ([abcdef]
+   (if (instance? js/SVGMatrix abcdef)
+     abcdef
+     (apply matrix abcdef))))
+
+;; Unlike matrix, transform does not take a single arg. This is because it is
+;; not possible to round-trip the :rotate type.
+(defn transform
+  ([]
+   (. svg-root createSVGTransform))
+  ([type arg & args]
+   (let [args (list* arg args)
+         tr (. svg-root createSVGTransform)]
+     (condp = type
+       :translate (japply tr setTranslate args)
+       :rotate (japply tr setRotate args)
+       :scale (japply tr setScale args)
+       :skew-x (. tr setSkewX (first args))
+       :skew-y (. tr setSkewY (first args))
+       :matrix (. tr setMatrix (matrix args))
+       (throw (js/Error. (str "Unknown SVGTransform type: " type))))
+     tr)))
