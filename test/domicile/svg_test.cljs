@@ -137,6 +137,46 @@
         (expect type-eq js/SVGMatrix (svg/matrix mx))
         (expect eq mx (svg/matrix mx)))))
 
+  (describe "transform"
+    (should "take no args"
+      (expect type-eq js/SVGTransform (svg/transform)))
+    (should "take args"
+      (expect type-eq js/SVGTransform (svg/transform :translate 1 2)))
+    (should "create matrix"
+      (let [tr (svg/transform :matrix 1 2 3 4 5 6)
+            mx (. tr -matrix)]
+        (expect eq 1 (. tr -type))
+        (expect eq 1 (. mx -a))
+        (expect eq 2 (. mx -b))
+        (expect eq 3 (. mx -c))
+        (expect eq 4 (. mx -d))
+        (expect eq 5 (. mx -e))
+        (expect eq 6 (. mx -f))))
+    (should "create translation"
+      (let [tr (svg/transform :translate 3 4)]
+        (expect eq 2 (. tr -type))
+        (expect eq 3 (.. tr -matrix -e))
+        (expect eq 4 (.. tr -matrix -f))))
+    (should "create scale"
+      (let [tr (svg/transform :scale 3 4)]
+        (expect eq 3 (. tr -type))
+        (expect eq 3 (.. tr -matrix -a))
+        (expect eq 4 (.. tr -matrix -d))))
+    (should "create rotation"
+      (let [tr (svg/transform :rotate 90 3 8)]
+        (expect eq 4 (. tr -type))
+        (expect eq 90 (. tr -angle))
+        (expect eq 11 (.. tr -matrix -e))
+        (expect eq 5 (.. tr -matrix -f))))
+    (should "create skewX"
+      (let [tr (svg/transform :skew-x 30)]
+        (expect eq 5 (. tr -type))
+        (expect eq 30 (. tr -angle))))
+    (should "create skewY"
+      (let [tr (svg/transform :skew-y 30)]
+        (expect eq 6 (. tr -type))
+        (expect eq 30 (. tr -angle)))))
+
   (describe "path-seg"
     (should "take args"
       (let [seg (svg/path-seg :L 1 2)]
